@@ -1,0 +1,715 @@
+$NG.AllReady(function (page,
+	{ useAction, useValuesChange, useDataIndexChange, useUpdateRows, useClick, useBeforeClick, useBeforeOpen }
+) {
+	/**===========翻译开始===========*/
+	var mstform = $NG.getCmpApi('PcmM4');
+	var Toolbar = $NG.getCmpApi('CntMDetailToolBar');
+	var dgrid = $NG.getCmpApi('PcmD4');
+	const { isChgCnt } = $NG.getQueryValue();
+	/**页面是修改状态时，项目只读 */
+	if ($NG.getQueryValue('oType') == 'edit') {
+		mstform.getItem('PhidPc').setReadOnly(true);
+		mstform.getItem('PhidPc').setProps({ disabled: true });
+		//财务系统是否存在 为否 修改状态时默认让 浪潮合同编码 只读
+		var user_cwxtsfcz = mstform.getItem('user_cwxtsfcz').getValue();
+		if (user_cwxtsfcz) {
+			if (user_cwxtsfcz == '1') {
+				mstform.getItem('user_insconcode').setReadOnly(false);
+				mstform.getItem('user_insconcode').setProps({ disabled: false });
+			} else {
+				mstform.getItem('user_insconcode').setReadOnly(true);
+				mstform.getItem('user_insconcode').setProps({ disabled: true });
+			}
+		}
+	}
+	if ($NG.getQueryValue('oType') == 'view') {
+		console.log("dataready");
+		var user_istbinspur = mstform.getItem('user_istbinspur').getValue();
+		console.log('user_istbinspur:', user_istbinspur);
+		console.log("Toolbar.getButtons():", Toolbar.getButtons());
+		if (user_istbinspur != '4' && user_istbinspur != null && user_istbinspur != '') { // 现在啥问题？？   现在user_istbinspur  =4   应该是不只读  但现在前端是只读的  
+			Toolbar.getItem('applyForReview').setReadOnly(true);
+			setTimeout(() => { Toolbar.getItem('applyForReview').setProps({ disabled: true }) }, 100);
+		} else {
+			Toolbar.getItem('IMPPushTask').setReadOnly(true);
+			Toolbar.getItem('applyForReview').setReadOnly(false);
+			setTimeout(() => { Toolbar.getItem('applyForReview').setProps({ disabled: false }) }, 100);//以后只用这个么  还是setonly  ye 等会  这个问题我还在想哪里又设置了这个disabled，我在问别人，你等一下
+		}
+
+	} else {
+		if (!isChgCnt == '1') {
+			Toolbar.getItem('applyForReview').setReadOnly(true);
+			setTimeout(() => { Toolbar.getItem('applyForReview').setProps({ disabled: true }) }, 100);
+		}
+	}
+	if (mstform) {
+		if ($NG.getQueryValue('otype') == "add") {
+			// 财务系统是否存在 值设置为1   1:是 0:否
+			mstform.getItem('user_cwxtsfcz').setValue('1');
+			// 预结算结算额不能超合同额比例 值设置为110%
+			mstform.getItem('PayOverPrecent').setValue('1.1');
+		}
+	}
+
+	/**页面是变更状态时，浪潮字段只读 */
+	//const isChgCnt1 = $NG.getQueryValue('isChgCnt');
+
+	console.log("isChgCnt", isChgCnt);
+	//console.log("isChgCnt1", isChgCnt1);
+	if (isChgCnt == '1') {
+		mstform.getItem('user_istbinspur').setReadOnly(true);
+		mstform.getItem('user_istbinspur').setProps({ disabled: true });
+		mstform.getItem('user_lcglzz').setReadOnly(true);
+		mstform.getItem('user_lcglzz').setProps({ disabled: true });
+		mstform.getItem('user_lcssxmb').setReadOnly(true);
+		mstform.getItem('user_lcssxmb').setProps({ disabled: true });
+		mstform.getItem('user_lcywdy').setReadOnly(true);
+		mstform.getItem('user_lcywdy').setProps({ disabled: true });
+		mstform.getItem('user_lchsbmzjm').setReadOnly(true);
+		mstform.getItem('user_lchsbmzjm').setProps({ disabled: true });
+
+		mstform.getItem('user_cwxtsfcz').setReadOnly(true);
+		mstform.getItem('user_cwxtsfcz').setProps({ disabled: true });
+		mstform.getItem('user_insconcode').setReadOnly(true);
+		mstform.getItem('user_insconcode').setProps({ disabled: true });
+
+		mstform.getItem('BillNo').setReadOnly(true);
+		mstform.getItem('BillNo').setProps({ disabled: true });
+		mstform.getItem('BillName').setReadOnly(true);
+		mstform.getItem('BillName').setProps({ disabled: true });
+		mstform.getItem('CntType').setReadOnly(true);
+		mstform.getItem('CntType').setProps({ disabled: true });
+		mstform.getItem('PhidPc').setReadOnly(true);
+		mstform.getItem('PhidPc').setProps({ disabled: true });
+		mstform.getItem('PhidCustomerEnt').setReadOnly(true);
+		mstform.getItem('PhidCustomerEnt').setProps({ disabled: true });
+		mstform.getItem('PhidSupplyEnt').setReadOnly(true);
+		mstform.getItem('PhidSupplyEnt').setProps({ disabled: true });
+		mstform.getItem('Stat').setReadOnly(true);
+		mstform.getItem('Stat').setProps({ disabled: true });
+		mstform.getItem('CntOrgSumVatFc').setReadOnly(true);
+		mstform.getItem('CntOrgSumVatFc').setProps({ disabled: true });
+		mstform.getItem('CntSumVatFc').setReadOnly(true);
+		mstform.getItem('CntSumVatFc').setProps({ disabled: true });
+		mstform.getItem('Zfbl').setReadOnly(true);
+		mstform.getItem('Zfbl').setProps({ disabled: true });
+		mstform.getItem('PhidInvComp').setReadOnly(true);
+		mstform.getItem('PhidInvComp').setProps({ disabled: true });
+		mstform.getItem('PhidTickComp').setReadOnly(true);
+		mstform.getItem('PhidTickComp').setProps({ disabled: true });
+		mstform.getItem('Zfbl').setReadOnly(true);
+		mstform.getItem('Zfbl').setProps({ disabled: true });
+		mstform.getItem('user_insconid').setReadOnly(true);
+		mstform.getItem('user_insconid').setProps({ disabled: true });
+		mstform.getItem('user_insconname').setReadOnly(true);
+		mstform.getItem('user_insconname').setProps({ disabled: true });
+		mstform.getItem('user_tbinspurtime').setReadOnly(true);
+		mstform.getItem('user_tbinspurtime').setProps({ disabled: true });
+		mstform.getItem('user_fplx').setReadOnly(true);
+		mstform.getItem('user_fplx').setProps({ disabled: true });
+		mstform.getItem('user_nsrlx').setReadOnly(true);
+		mstform.getItem('user_nsrlx').setProps({ disabled: true });
+		mstform.getItem('user_tzhdfkbl').setReadOnly(true);
+		mstform.getItem('user_tzhdfkbl').setProps({ disabled: true });
+		mstform.getItem('user_jsje').setReadOnly(true);
+		mstform.getItem('user_jsje').setProps({ disabled: true });
+		mstform.getItem('user_fkje').setReadOnly(true);
+		mstform.getItem('user_fkje').setProps({ disabled: true });
+		mstform.getItem('user_fpje').setReadOnly(true);
+		mstform.getItem('user_fpje').setProps({ disabled: true });
+		mstform.getItem('user_rate').setReadOnly(true);
+		mstform.getItem('user_rate').setProps({ disabled: true });
+	}
+	// else {
+	//     mstform.getItem('user_istbinspur').setReadOnly(false);
+	//     mstform.getItem('user_lcglzz').setReadOnly(false);
+	//     mstform.getItem('user_lcssxmb').setReadOnly(false);
+	//     mstform.getItem('user_lcywdy').setReadOnly(false);
+	//     mstform.getItem('user_lchsbmzjm').setReadOnly(false);
+
+	//     mstform.getItem('user_cwxtsfcz').setReadOnly(false);
+	//     mstform.getItem('user_insconcode').setReadOnly(false);
+	// }
+	//mstform.getItem('PayOverPrecent').userSetReadOnly(true);
+	//mstform.getItem('CntSumVatFc').userSetReadOnly(false);
+	/*根据支付比例带出同步初始比例start*/
+	useValuesChange(({
+		args
+	}) => {
+		// 获取 支付比例 的值
+		var Zfbl = mstform.getItem('Zfbl').getValue();
+		// 将 支付比例 的值填到 同步初始比例
+		mstform.getItem('user_tzhdfkbl').setValue(Zfbl);
+	}, "PcmM4.Zfbl");
+	/*根据支付比例带出同步初始比例end*/
+
+	/*预付款比例调整start*/
+	useValuesChange(({
+		args
+	}) => {
+		var CntSumVatFc = mstform.getItem('CntSumVatFc').getValue();
+		var yfkbl = mstform.getItem('user_yfkje').getValue();
+		if (CntSumVatFc != '' && CntSumVatFc != 0) {
+			mstform.getItem('user_yfkbl').setValue(yfkbl / CntSumVatFc);
+		}
+		else {
+			mstform.getItem('user_yfkbl').setValue('');
+		}
+	}, "PcmM4.user_yfkje");
+	/*预付款比例调整end*/
+
+	/*含税金额调整start*/
+	useValuesChange(({
+		args
+	}) => {
+		var CntSumVatFc = mstform.getItem('CntSumVatFc').getValue();
+		var yfkbl = mstform.getItem('user_yfkje').getValue();
+		if (CntSumVatFc != '' && CntSumVatFc != 0) {
+			mstform.getItem('user_yfkbl').setValue(yfkbl / CntSumVatFc);
+		}
+		else {
+			mstform.getItem('user_yfkbl').setValue('');
+		}
+	}, "PcmM4.CntSumVatFc");
+	/*含税金额调整end*/
+
+	/*浪潮返回标志为4申请取消审核可点击start*/
+	// if ($NG.getQueryValue('otype') == "view") {
+	// 	var user_istbinspur = mstform.getItem('user_istbinspur').getValue();
+	// 	if (user_istbinspur == '4') {
+	// 		Toolbar.getItem('applyForReview').setReadOnly(false);
+	// 	}
+	// 	else if (mstform.getItem('user_insconid').getValue() != null) {
+	// 		Toolbar.getItem('applyForReview').setReadOnly(false);
+	// 	} else {
+	// 		Toolbar.getItem('applyForReview').setReadOnly(true);
+	// 	}
+	// }
+
+	/*财务系统是否存在为是的时候必输，为否的时候不必输start*/
+	useValuesChange(({
+		args
+	}) => {
+		var user_cwxtsfcz = mstform.getItem('user_cwxtsfcz').getValue();
+		if (user_cwxtsfcz == '1') {
+			mstform.getItem('user_insconcode').setProps({
+				required: true, //required是否必输
+			});
+			mstform.getItem('user_insconid').setProps({
+				required: true, //required是否必输
+			});
+			mstform.getItem('user_insconname').setProps({
+				required: true, //required是否必输
+			});
+			mstform.getItem('user_insconcode').setReadOnly(false);
+			mstform.getItem('user_insconcode').setProps({ disabled: false });
+		} else {
+			mstform.getItem('user_insconcode').setProps({
+				required: false, //required是否必输
+			});
+			mstform.getItem('user_insconid').setProps({
+				required: false, //required是否必输
+			});
+			mstform.getItem('user_insconname').setProps({
+				required: false, //required是否必输
+			});
+			mstform.getItem('user_insconcode').setReadOnly(true);
+			mstform.getItem('user_insconcode').setProps({ disabled: true });
+		}
+	}, "PcmM4.user_cwxtsfcz");
+	/*财务系统是否存在为是的时候必输，为否的时候不必输end*/
+
+	//如果 浪潮id显示有长度取消审核
+	var user_istbinspur = mstform.getItem('user_istbinspur').getValue();
+	// if (user_istbinspur == '4') {
+	// 	Toolbar.getItem('applyForReview').setReadOnly(false);
+	// }
+	// else if (mstform.getItem('user_insconid').getValue() != null) {
+
+	// 	Toolbar.getItem('applyForReview').setReadOnly(true);
+	// }
+
+	//如果 浪潮是否存在显示的是 浪潮名称、id、编号必填
+	if (mstform.getItem('user_cwxtsfcz').getValue() == '2') {
+		mstform.getItem('user_insconcode').setProps({
+			required: false, //required是否必输
+		});
+		mstform.getItem('user_insconid').setProps({
+			required: false, //required是否必输
+		});
+		mstform.getItem('user_insconname').setProps({
+			required: false, //required是否必输
+		});
+	} else {
+		mstform.getItem('user_insconcode').setProps({
+			required: true, //required是否必输
+		});
+		mstform.getItem('user_insconid').setProps({
+			required: true, //required是否必输
+		});
+		mstform.getItem('user_insconname').setProps({
+			required: true, //required是否必输
+		});
+
+	}
+	/*浪潮返回标志为4申请取消审核可点击end*/
+
+	if ($NG.getQueryValue('otype') == "add") {
+		//判断编号是否存在合同
+		useValuesChange(({
+			args
+		}) => {
+			var Billno = mstform.getItem('BillNo').getValue();
+			var bill_no = Billno.replace(/\s*/g, "")
+			mstform.getItem('BillNo').setValue(bill_no);
+
+			$NG.execServer('htbhss', {
+				'bill_no': bill_no
+			}, function (res) {
+				if (res.count > 0) {
+					const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+					var htbh = data[0].extendObjects.ht
+					if (htbh == 1) {
+						$NG.alert("存在重复编码");
+						flag = 1;
+						return false;
+					}
+				}
+			})
+		}, "PcmM4.BillNo");
+	}
+
+	/*隐藏三个分组start*/
+	// document.getElementsByTagName('fieldset')[1].style.visibility = 'hidden';
+	// document.getElementsByTagName('fieldset')[2].style.visibility = 'hidden';
+	// document.getElementsByTagName('fieldset')[4].style.visibility = 'hidden';
+	/*隐藏三个分组end*/
+
+	/*乙方单位为组织的时候浪潮乙方为必输切不只读start*/
+	useValuesChange(({
+		args
+	}) => {
+		var PhidSupplyEnt = mstform.getItem('PhidSupplyEnt').getValue();
+		if (PhidSupplyEnt == null || PhidSupplyEnt == '') {
+			return;
+		}
+		$NG.execServer('contract_CorrUnit', {
+			'phid': PhidSupplyEnt
+		}, function (res) {
+			if (res.status != 'success') {
+				$NG.alert("sql有误");
+				return;
+			}
+
+			if (res.count == 1) {
+				var data = JSON.parse(res.data);
+				if (data[0].extendObjects.type == 'org') {
+					//浪潮乙方设置为只读
+					mstform.getItem('user_lcyf').setReadOnly(false);
+					mstform.getItem('user_lcyf').setProps({
+						required: true, //required是否必输
+					});
+				} else {
+					mstform.getItem('user_lcyf').setReadOnly(true);
+					mstform.getItem('user_lcyf').setProps({
+						required: false, //required是否必输
+					});
+				}
+			}
+		});
+	}, "PcmM4.PhidSupplyEnt");
+	/*乙方单位为组织的时候浪潮甲方为必输切不只读end*/
+
+	/*输入浪潮合同编码带出浪潮合同IDstart*/
+	// user_insconcode字段的引号在功能扩展已经处理好了
+	useValuesChange(({
+		args
+	}) => {
+		var user_insconcode = mstform.getItem('user_insconcode').getValue();
+		if (user_insconcode) {
+			$NG.execServer('user_insconcode', {
+				'user_insconcode': user_insconcode
+			}, function (res) {
+				if (res.count > 0) {
+					var data = JSON.parse(res.data);
+					mstform.getItem('user_insconid').setValue(data[0].extendObjects.htnm);
+					mstform.getItem('user_insconname').setValue(data[0].extendObjects.htmc);
+				} else {
+					mstform.getItem('user_insconid').setValue('');
+					mstform.getItem('user_insconname').setValue('');
+				}
+			});
+		}
+	}, "PcmM4.user_insconcode");
+	/*输入浪潮合同编码带出浪潮合同IDend*/
+
+	/*管理组织选择后清空所属项目部start*/
+	useValuesChange(({
+		args
+	}) => {
+		var PhidPc = mstform.getItem('PhidPc').getValue()
+		if (PhidPc == null || PhidPc == '') {
+			return;
+		}
+
+		$NG.execServer('xmxxdcglzssmb', {
+			'phid': PhidPc
+		}, function (res) {
+			if (res.count > 0) {
+				var data = JSON.parse(res.data);
+				var user_lcglzz = data[0].extendObjects.user_lcglzz;
+				var user_lcglzz_exname = data[0].extendObjects.user_lcglzz_exname;
+				var user_lcssxmb = data[0].extendObjects.user_lcssxmb;
+				var user_lcssxmb_exname = data[0].extendObjects.user_lcssxmb_exname;
+				mstform.setValues({
+					user_lcglzz: {
+						value: user_lcglzz,
+						label: user_lcglzz_exname
+					},
+					user_lcssxmb: {
+						value: user_lcssxmb,
+						label: user_lcssxmb_exname
+					}
+				});
+			} else {
+				$NG.alert('项目信息没有管理组织和所属项目部');
+				return false;
+			}
+		});
+
+		setTimeout(() => {
+			var lcssxmb = mstform.getItem('user_lcssxmb').getValue();
+			if (!lcssxmb) {
+				$NG.alert('该项目信息没有浪潮所属项目部');
+				return false;
+			}
+			$NG.execServer('ssxmb_bmywdy', {
+				'dept': lcssxmb
+			}, function (res) {
+				if (res.count > 0) {
+					var data = JSON.parse(res.data);
+					if (data.length == 1) {
+						if (data[0].extendObjects.user_lcywdy == null) {
+							$NG.alert('请联系管理员处理，部门对照未做');
+							mstform.getItem('user_lcywdy').setValue(null);
+							return false;
+						} else {
+							mstform.getItem('user_lcywdy').setValue(data[0].extendObjects.user_lcywdy);
+						}
+					} else {
+						$NG.alert('请联系管理员处理，部门对照存在重复');
+						mstform.getItem('user_lcywdy').setValue(null);
+						return false;
+					}
+				} else {
+					$NG.alert('请先维护部门业务单元对照表');
+					mstform.getItem('user_lcywdy').setValue(null);
+					return false;
+				}
+				$NG.execServer('ssxmb_zjm', {
+					'dept': lcssxmb
+				}, function (res) {
+					if (res.count > 0) {
+						var data = JSON.parse(res.data);
+						if (data.length == 1) {
+							if (data[0].extendObjects.user_mnemcodeinaccdepart == null) {
+								$NG.alert('请联系管理员处理，部门对照未做');
+								return false;
+							}
+							mstform.getItem('user_lchsbmzjm').setValue(data[0].extendObjects.user_mnemcodeinaccdepart);
+						} else {
+							$NG.alert('请联系管理员处理，部门对照存在重复');
+							mstform.getItem('user_lchsbmzjm').setValue(null);
+						}
+					} else {
+						$NG.alert('请联系管理员处理，部门对照未做');
+						mstform.getItem('user_lchsbmzjm').setValue(null);
+						return false;
+					}
+				});
+			});
+		}, 200);
+	}, "PcmM4.PhidPc");
+	/*管理组织选择后清空所属项目部end*/
+
+	/*管理组织选择后清空所属项目部start*/
+	useValuesChange(({
+		args
+	}) => {
+		mstform.getItem('user_lcssxmb').setValue();
+	}, 'PcmM4.user_lcglzz');
+	/*管理组织选择后清空所属项目部end*/
+
+	useBeforeOpen((data) => {
+		var zz = mstform.getItem('user_lcglzz').getValue();
+		if (zz == null || zz == '') {
+			$NG.alert('请先选择管理组织');
+			return false;
+		}
+		$NG.updateUI(function (updater, state) {
+			updater.fieldSetForm.PcmM4.user_lcssxmb.setProps({
+				clientSqlFilter: ('parent_orgid = ' + zz),
+				placeholder: ``
+			});
+		});
+		return true;
+	}, 'pc_dept');
+
+	/*项目所属部选择后带出浪潮业务单元start*/
+	useValuesChange(({
+		args
+	}) => {
+		var user_lcssxmb = mstform.getItem('user_lcssxmb').getValue();
+		if (!user_lcssxmb) {
+			return;
+		}
+		$NG.execServer('ssxmb_bmywdy', {
+			'dept': user_lcssxmb
+		}, function (res) {
+			if (res.count > 0) {
+				var data = JSON.parse(res.data);
+				if (data.length == 1) {
+					if (data[0].extendObjects.user_lcywdy == null) {
+						$NG.alert('请联系管理员处理，部门对照未做');
+						mstform.getItem('user_lcywdy').setValue(null);
+						return false;
+					} else {
+						mstform.getItem('user_lcywdy').setValue(data[0].extendObjects.user_lcywdy);
+					}
+				} else {
+					$NG.alert('请联系管理员处理，部门对照存在重复');
+					mstform.getItem('user_lcywdy').setValue(null);
+					return false;
+				}
+
+			} else {
+				$NG.alert('请先维护部门业务单元对照表');
+				mstform.getItem('user_lcywdy').setValue(null);
+				return false;
+			}
+			$NG.execServer('ssxmb_zjm', {
+				'dept': user_lcssxmb
+			}, function (res) {
+				if (res.count > 0) {
+					var data = JSON.parse(res.data);
+					if (data.length == 1) {
+						if (data[0].extendObjects.user_mnemcodeinaccdepart == null) {
+							$NG.alert('请联系管理员处理，部门对照未做');
+							return false;
+						} else {
+							mstform.getItem('user_lchsbmzjm').setValue(data[0].extendObjects.user_mnemcodeinaccdepart);
+						}
+					} else {
+						$NG.alert('请联系管理员处理，部门对照存在重复');
+						mstform.getItem('user_lchsbmzjm').setValue(null);
+					}
+				} else {
+					$NG.alert('请联系管理员处理，部门对照未做');
+					mstform.getItem('user_lchsbmzjm').setValue(null);
+					return false;
+				}
+			});
+		});
+	}, "PcmM4.user_lcssxmb");
+	/*项目所属部选择后带出浪潮业务单元end*/
+
+	//计算预计收益率
+	useValuesChange(({ args }) => {
+		var yjsr = mstform.getItem('user_yjsr').getValue();
+		var hte = mstform.getItem('CntSumVatFc').getValue();
+		//console.log('yjsr : ', yjsr);
+		//console.log('hte : ', hte);
+		if (yjsr != null && yjsr != '' && yjsr != '0') {
+			mstform.getItem('user_yjsyl').setValue((yjsr - hte) / yjsr);
+		} else {
+			mstform.getItem('user_yjsyl').setValue(0);
+		}
+	}, "PcmM4.user_yjsr");
+
+	useUpdateRows(({ args }) => {
+		var hte = 0;
+		var rows = dgrid.getRows();
+		if (rows) {
+			rows.forEach(row => {
+				hte += row.AmtVatFc;
+			});
+		}
+		var yjsr = mstform.getItem('user_yjsr').getValue();
+		console.log('yjsr : ', yjsr);
+		console.log('hte : ', hte);
+		if (yjsr != null && yjsr != '' && yjsr != '0') {
+			mstform.getItem('user_yjsyl').setValue((yjsr - hte) / yjsr);
+		} else {
+			mstform.getItem('user_yjsyl').setValue(0);
+		}
+	}, "PcmD4");
+
+	//保存前检测
+	useBeforeClick(({
+		args
+	}) => {
+		var flag = 0;
+		var user_insconcode = mstform.getItem('user_insconcode').getValue();
+		var pc = mstform.getItem('PhidPc').getValue();
+		if (mstform.getItem('user_insconcode').getValue() != null && mstform.getItem('user_insconcode').getValue() != '') {
+			/*查看浪潮合同编码是否存在user_insconcode 该视图中start*/
+			$NG.execServer('user_insconcode', {
+				'user_insconcode': user_insconcode
+			}, function (res) {
+				if (res.status != 'success') {
+					$NG.alert("sql有误");
+					flag = 1;
+					return false;
+				} else if (res.count == 0) {
+					$NG.alert("该浪潮合同编码在浪潮系统中不存在");
+					flag = 1;
+					return false;
+				} else {
+
+				}
+			});
+			if ($NG.getQueryValue('otype') == 'edit') {
+				var bill_no = mstform.getItem('BillNo').getValue() ? "'" + mstform.getItem('BillNo').getValue() + "'" : mstform.getItem('BillNo').getValue();
+				$NG.execServer('lchtbm_djbh', {
+					'bill_no': bill_no
+				}, function (res) {
+					if (res.status != 'success') {
+						$NG.alert("sql有误");
+						flag = 1;
+						return false;
+					} else if (res.count > 0) {
+						var data = JSON.parse(res.data)
+						if (data[0].extendObjects.user_insconcode == mstform.getItem('user_insconcode').getValue()) {
+
+						} else {
+							//检测该浪潮合同编码是否在新中大存在
+							$NG.execServer('lchtbm', {
+								'user_insconcode': user_insconcode
+							}, function (res) {
+								if (res.status != 'success') {
+									$NG.alert("sql有误");
+									flag = 1;
+									return false;
+								} else if (res.count == 0) { } else {
+									$NG.alert("该浪潮合同编码在新中大中已存在");
+									flag = 1;
+									return false;
+								}
+							});
+						}
+					} else {
+						//检测该浪潮合同编码是否在新中大存在
+						$NG.execServer('lchtbm', {
+							'user_insconcode': user_insconcode
+						}, function (res) {
+							if (res.status != 'success') {
+								$NG.alert("sql有误");
+								flag = 1;
+								return false;
+							} else if (res.count == 0) { } else {
+								$NG.alert("该浪潮合同编码在新中大中已存在");
+								flag = 1;
+								return false;
+							}
+						});
+					}
+				});
+			}
+			if ($NG.getQueryValue('otype') == "add") {
+				//判断编号是否存在合同
+				var bill_no = mstform.getItem('BillNo').getValue();
+				$NG.execServer('htbhss', {
+					'bill_no': bill_no
+				}, function (res) {
+					if (res.count > 0) {
+						$NG.alert("存在重复编码");
+						flag = 1;
+						return false;
+					}
+					//检测该浪潮合同编码是否在新中大存在
+					$NG.execServer('lchtbm', {
+						'user_insconcode': user_insconcode
+					}, function (res) {
+						if (res.status != 'success') {
+							$NG.alert("sql有误");
+							flag = 1;
+							return false;
+						} else if (res.count == 0) { } else {
+							$NG.alert("该浪潮合同编码在新中大中已存在");
+							flag = 1;
+							return false;
+						}
+					});
+				});
+			}
+		}
+		/*查看浪潮合同编码是否存在user_insconcode 该视图中end*/
+
+		/*判断项目信息所属项目部和部门业务单元对照字段是否有值start*/
+		if ($NG.getQueryValue('otype') == "add" || $NG.getQueryValue('otype') == "edit") {
+			if (pc == null || pc == '') {
+				$NG.alert("请维护项目信息");
+				flag = 1;
+				return false;
+			}
+			setTimeout(() => {
+				$NG.execServer('xmxx_ssxmb_lcywdy', {
+					'pc': pc
+				}, function (res) {
+					if (res.status != 'success') {
+						$NG.alert("sql有误");
+						flag = 1;
+					} else if (res.count == 1) {
+						var data = JSON.parse(res.data);
+						if (!data[0].extendObjects.user_pc_dept) {
+							$NG.alert("合同所属项目信息没有维护所属项目部");
+							flag = 1;
+							return false;
+						}
+						if (!data[0].extendObjects.user_mnemcodeinaccdepart) {
+							$NG.alert("合同所属项目信息的所属项目部浪潮系统没有对应核算部门的助记码");
+							flag = 1;
+							return false;
+						}
+						if (!data[0].extendObjects.user_lcywdy) {
+							$NG.alert("合同所属项目信息没有维护浪潮业务单元");
+							flag = 1;
+							return false;
+						}
+					}
+				});
+			}, 300);
+		}
+		/*判断项目信息所属项目部和部门业务单元对照字段是否有值end*/
+
+		/*税率不能为0strat*/
+		var rate = mstform.getItem("user_rate").getValue();
+		if (rate == 0) {
+			if (mstform.getItem("user_szlxpdbz").getValue() != '1') {
+				$NG.confirm("税率是否为0?").then(function (btnId) {
+					if (btnId) {
+						mstform.getItem("user_szlxpdbz").setValue('1');
+						flag = 1
+						return false;
+					} else {
+						flag = 1
+						mstform.getItem("user_szlxpdbz").setValue(null);
+						return false;
+					}
+				});
+			}
+		}
+
+		/*税率不能为0end*/
+
+		if (flag == 1) {
+			return false;
+		}
+		if (flag == 0) {
+			return true;
+		}
+
+	}, "CntMDetailToolBar.save");
+
+	/**===========翻译完成===========*/
+});

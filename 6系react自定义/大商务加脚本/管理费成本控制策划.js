@@ -1,0 +1,572 @@
+function flatArrayToTree(flatArray, rootId = null) {
+    const tree = [];
+    const map = {};
+
+    // 首先将所有节点存入map，以s_tree_id为key
+    flatArray.forEach(item => {
+        map[item.s_tree_id] = { ...item, children: [] };
+    });
+    // 遍历所有节点，将子节点放入父节点的children数组中
+    flatArray.forEach(item => {
+        const node = map[item.s_tree_id];
+        const parentId = item.s_tree_pid;
+
+        if (parentId === rootId || parentId === null || parentId === undefined || parentId === '' || parentId === '0') {
+            // 如果没有父节点或父节点是根节点，则直接添加到树中
+            tree.push(node);
+        } else if (map[parentId]) {
+            // 如果有父节点，则将自己添加到父节点的children中
+            map[parentId].children.push(node);
+        }
+    });
+    return tree;
+}
+// ====================== 配置区 ======================
+const MAIN_FORM = 'p_form_0000000080_m';
+const TABLE1 = 'p_form_p_form_0000000080_d2'; // 替换为实际表1 ID
+const TABLE2 = 'p_form_0000000080_d3'; // 替换为实际表2 ID
+// ====================== 工具函数 ======================
+const safeParseFloat = (value) => {
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+};
+
+$NG.AllReady(function (editPage, {
+    useValuesChange, useUpdateRow, useDataIndexChange, useOtherDataIndexChange, useAction
+}) {
+    //项目部拟发生成本
+    // 自定义防抖函数（兼容无lodash）
+    useAction('onClick')(() => {
+        // 改1：url为表单的列表页面
+        window.location.href = 'http://192.168.3.241:30599/ngweb/portal/index.html#/sub/formruntime/customform/list?AppTitle=%E7%AE%A1%E7%90%86%E8%B4%B9%E6%88%90%E6%9C%AC%E6%8E%A7%E5%88%B6%E7%AD%96%E5%88%92&busType=lingbaling&isSso=1&menucode=9265f708-9ce5-3cb2-d8f5-d4267ca4e947';
+    }, 'u_libb')
+    
+    if (editPage.oType == "add") {
+        debugger;
+        // 改2：表名修改为对应表单表名
+        // 第一步，获取原单据的id，通过imp接口信息拿到
+        const sourceId = $NG.getPageState().data.p_form_0000000080_m.u_lyxmchzj;
+        console.log('原单据id:', sourceId)
+        if (sourceId) {
+            // 第二步，请求自定义单据详情接口，获取原单据的数据
+            $NG.AllReady(async () => {
+                try {
+                    const result = await $NG.request.get({
+                        url: '/sup/customServer/getInfo',
+                        data: {
+                            id: sourceId,
+                            oType: 'view',
+                            // 改3：对应表单业务类型
+                            customBusCode: 'lingbaling',
+                            encryptPrimaryKey: $NG.CryptoJS.encode(sourceId)
+                        }
+                    });
+                    console.log('result:', result);
+
+                    if (result) {
+                        const data = result?.data;
+                        console.log('data', data);
+                        if (!data) {
+                            return;
+                        }
+
+                        const page = $NG.getPageInstance()
+                        const editUI = page?.getEditUI();
+                        console.log('editUI', editUI);
+
+                        // 第三步，渲染数据
+
+                        /**
+                         * 主表需要重置的字段集合
+                         */
+                        const mainTableInitValues = {
+                            phid: '',
+                            phid_fill_psn: $NG.getUser().userID,
+                            phid_fill_psn_EXName: $NG.getUser().userName,
+                            bill_dt: $NG.formatDate(new Date(), 'YYYY-MM-DD HH:mm:ss'),
+                            wf_flag: 0,
+                            app_status: 0,
+                            app_dt: null,
+                            phid_app: null,
+                            bill_no: '',
+                            printcount: 0,
+                            arc_flag: 0,
+                            iscost: 0,
+                            cost_amount: 0,
+                            ng_data_status: null,
+                            u_bb: Number(data.p_form_0000000080_m.u_bb == '' ? 1 : data.p_form_0000000080_m.u_bb) + 1
+                        };
+                        //console.log('data.p_form_0000000080_m.u_bb:', data.p_form_0000000080_m.u_bb);
+                        /**
+                         * 主表需要重置的字段集合
+                         */
+                        const detailInitValues = {
+                            phid: '',
+                            pphid: '',
+                            code: '',
+                            asr_flag: 0
+                        };
+
+                        /**
+                         * 获取附件项,附件相关的字段需进行滞空处理不进行复制，否则新老单据就会公用一套附件
+                         */
+                        const getAttachmentItem = (containerId) => {
+                            const items = [];
+                            const resetFields = {};
+                            if (editUI?.fieldSetForm?.[containerId]) {
+                                editUI?.fieldSetForm?.[containerId]?.children?.forEach((d) => {
+                                    items.push(...(d?.children ?? []));
+                                });
+                            } else {
+                                items.push(...(editUI?.containerIds?.[containerId]?.children ?? []));
+                            }
+                            items
+                                ?.filter((d) => {
+                                    const xtype = d?.xtype || d?.editor?.xtype;
+                                    return ['Attachment', 'Image'].includes(xtype);
+                                })
+                                ?.forEach((d) => {
+                                    resetFields[d.name] = '';
+                                });
+                            return resetFields;
+                        };
+
+                        /**
+                         * 树结构明细表需要递归处理
+                         */
+                        const loopSetDataValue = (tableValue, resetFields) => {
+                            // 明细表、包含树明细
+                            tableValue.forEach((v) => {
+                                Object.entries({ ...resetFields, ...detailInitValues }).forEach(([field, resetValue]) => {
+                                    v[field] = resetValue;
+                                });
+                                if (v?.children?.length) loopSetDataValue(v.children, resetFields);
+                            });
+                        };
+
+                        Object.keys(data).forEach((key) => {
+                            const value = data[key];
+                            const resetFields = getAttachmentItem(key);
+                            // 主表
+                            if ($NG.isObject(value)) {
+                                Object.entries({ ...resetFields, ...mainTableInitValues }).forEach(([field, resetValue]) => {
+                                    value[field] = resetValue;
+                                });
+                                // 明细表
+                            } else if ($NG.isArray(value)) {
+                                loopSetDataValue(value, resetFields);
+                            }
+                        });
+                        $NG.updateState(updater => {
+                            updater.data.setProps(() => data)
+                        })
+                        console.log('data:', data);
+                    }
+                } catch (error) {
+                    console.error('请求发生错误:', error);
+                }
+            });
+        }
+
+    }
+    const debounce = (func, wait) => {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func(...args), wait);
+        };
+    };
+
+    // 自定义行事件监听（替代useTableRowChange）
+    const bindTableEvents = (table, callback) => {
+        table.on('rowAdded', callback);
+        table.on('rowDeleted', callback);
+    };
+
+    // 初始化状态
+    let isTreeLoading = false;  // 树形加载状态锁 
+    let sum1 = 0, sum2 = 0;
+
+    // 获取表格API 
+    const mainForm = $NG.getCmpApi("p_form_0000000080_m");
+    const table1 = $NG.getCmpApi("p_form_p_form_0000000080_d2");
+    const table2 = $NG.getCmpApi("p_form_0000000080_d3");
+
+    // 计算函数（优化NaN处理）
+    const calculateSum1 = () => {
+        sum1 = table1.getRows().reduce((acc, row) =>
+            acc + (parseFloat(row.u_gz_bz) || 0), 0);
+        console.log(sum1);
+        return sum1;
+    };
+
+    const calculateSum2 = () => {
+        sum2 = table2.getRows().reduce((acc, row) =>
+            acc + (parseFloat(row.u_hj) || 0), 0);
+        console.log(sum2);
+        return sum2;
+    };
+
+    // 防抖更新总成本 
+    const updateTotalCost = debounce(() => {
+        if (isTreeLoading) return; // 加载中跳过 
+        // mainForm.setProps({
+        //     u_xmbnfscb: a
+        // });
+        $NG.updateState((updater) => {
+            const sumTotal = (calculateSum1() + calculateSum2()).toFixed(2);
+            console.log(sumTotal);
+            updater.data.p_form_0000000080_m.setProps({
+                u_xmbnfscb: sumTotal,
+            });
+        });
+
+    }, 300);
+    //自动带出二维成本
+    var mstform = $NG.getCmpApi('p_form_0000000080_m');
+    console.log("mstform:", mstform);
+    const bill_no = mstform.getValues().bill_no;
+    console.log("bill_no:", bill_no);
+    $NG.execServer("gjdjdcglf", {
+        'billno': bill_no
+    }, function (res) {
+        console.log("res.data:", res.data);
+        const data = JSON.parse(res.data);
+        console.log("data[0].extendObjects:" + data[0].extendObjects);
+        const u_glfewcbzb = data[0].extendObjects.u_glfewcbzb;
+        console.log("u_glfewcbzb:", u_glfewcbzb);
+        //项目公司、投资概算
+        $NG.updateState((updater) => {
+            updater.data.p_form_0000000080_m.setProps({
+                u_glfewcbzb: u_glfewcbzb,
+            });
+        });
+    });
+
+    // ============= 事件监听配置 =============
+    // 字段变更监听
+    useDataIndexChange(({ field }) => {
+        if (field === 'u_gz_bz') updateTotalCost();
+    }, [TABLE1, 'u_gz_bz']);
+
+    useDataIndexChange(({ field }) => {
+        if (field === 'u_hj') updateTotalCost();
+    }, [TABLE2, 'u_hj']);
+
+    // 明细表1选择完姓名自动带出职务
+    useUpdateRow(({ args, table }) => {
+        const record = args[0];
+        console.log("args[0]:", record);
+        const u_name = record.u_name;
+        console.log("u_name:", u_name);
+        //从项目取值
+        if (u_name) {
+            $NG.execServer("getygxx", {
+                ygid: u_name
+            }, function (res) {
+                console.log("res:", res);
+                const data = JSON.parse(res.data);
+                console.log("data[0].extendObjects:" + data[0].extendObjects);
+                const u_zw1 = data[0].extendObjects.gw_name;
+                //项目公司、投资概算
+                record.u_zw1 = u_zw1;
+                table.updateRow(record);
+            });
+        }
+    }, "p_form_p_form_0000000080_d2");
+
+    // 行增删事件监听（自定义实现）
+    bindTableEvents(table1, updateTotalCost);
+    bindTableEvents(table2, updateTotalCost);
+
+    // ============= 树形表格加载 =============
+    const dgrid = $NG.getCmpApi('p_form_p_form_0000000080_d2');
+    const d1grid = $NG.getCmpApi('p_form_0000000080_d3');
+
+    // 添加新增页面的初始化逻辑
+    if (editPage.oType == "add") {
+        const bill_no = mstform.getValues().bill_no;
+        $NG.execServer("glfcbkzch", { 'billname': '管理费成本控制策划' }, (res) => {
+            try {
+                const data = typeof res.data === 'string'
+                    ? JSON.parse(res.data)
+                    : res.data;
+
+                const treeData = flatArrayToTree(
+                    data.map(item => ({ ...item.extendObjects }))
+                );
+
+                dgrid.addRows(treeData);
+            } catch (e) {
+                console.error('管理费成本控制策划树形数据加载失败', e);
+            }
+        });
+
+        $NG.execServer("qtjjf", { 'billname': '其他间接费成本明细' }, (res) => {
+            try {
+                const data = typeof res.data === 'string'
+                    ? JSON.parse(res.data)
+                    : res.data;
+
+                const treeData = flatArrayToTree(
+                    data.map(item => ({ ...item.extendObjects }))
+                );
+
+                d1grid.addRows(treeData);
+            } catch (e) {
+                console.error('其他间接费成本明细树形数据加载失败', e);
+            }
+        });
+    }
+
+    // 添加项目类别变更监听
+    useValuesChange(({ args }) => {
+        isTreeLoading = true; // 加锁
+        isTreeLoading1 = true; // 加锁
+        dgrid.clearRows();
+        d1grid.clearRows();
+
+        const xmlb = args[0]; // 获取项目类别值
+        console.log("项目类别变更:", xmlb);
+
+        $NG.execServer("glfcbkzch", { 'billname': '管理费成本控制策划' }, (res) => {
+            try {
+                const data = typeof res.data === 'string'
+                    ? JSON.parse(res.data)
+                    : res.data;
+
+                const treeData = flatArrayToTree(
+                    data.map(item => ({ ...item.extendObjects }))
+                );
+
+                // 批量添加+延迟解锁 
+                dgrid.addRows(treeData);
+                setTimeout(() => {
+                    isTreeLoading = false;
+                    // updateTotalCost(); // 删除此处的合计调用，避免数据未渲染时求和为0
+                }, 100);
+
+            } catch (e) {
+                console.error(' 管理费成本控制策划树形数据加载失败', e);
+                isTreeLoading = false;
+            }
+        });
+
+        $NG.execServer("qtjjf", { 'billname': '其他间接费成本明细' }, (res) => {
+            try {
+                const data = typeof res.data === 'string'
+                    ? JSON.parse(res.data)
+                    : res.data;
+
+                const treeData = flatArrayToTree(
+                    data.map(item => ({ ...item.extendObjects }))
+                );
+
+                // 批量添加+延迟解锁 
+                d1grid.addRows(treeData);
+                setTimeout(() => {
+                    isTreeLoading1 = false;
+                    // updateTotalCost(); // 删除此处的合计调用，避免数据未渲染时求和为0
+                }, 100);
+
+            } catch (e) {
+                console.error(' 其他间接费成本明细树形数据加载失败', e);
+                isTreeLoading1 = false;
+            }
+        });
+    }, "u_xmlb");
+
+    //其他间接费的总价
+    var tables = $NG.getCmpApi("p_form_0000000080_d3");
+    useUpdateRow(({ args, table }) => {
+        const record = args[0];
+        //预估总价
+        if (record.u_sl && record.u_dj) {
+            record.u_hj = (
+                parseFloat(record.u_dj) * parseFloat(record.u_sl)
+            ).toFixed(2);
+        }
+        updateTotalCost(); // 新增：每次编辑后都触发合计
+    })
+
+    var tables = $NG.getCmpApi("p_form_p_form_0000000080_d2");
+    useUpdateRow(({ args, table }) => {
+        const record = args[0];
+        //月度津贴合计
+        record.u_ydjt_all = (
+            (parseFloat(record.u_ydjt_clf) || 0) +
+            (parseFloat(record.u_ydjt_bgf) || 0) +
+            (parseFloat(record.u_ydjt_jtbz) || 0) +
+            (parseFloat(record.u_ydjt_txbz) || 0) +
+            (parseFloat(record.u_ydjt_dn_gzqx) || 0) +
+            (parseFloat(record.u_ydjt_ccbt) || 0)
+        );
+        //税前小计
+        record.u_gzze_sqxj = (
+            (parseFloat(record.u_gzze_jcgz) || 0) +
+            (parseFloat(record.u_gzze_zwgz) || 0) +
+            (parseFloat(record.u_gzze_ngjt) || 0) +
+            (parseFloat(record.u_gzze_jbf) || 0) +
+            (parseFloat(record.u_gzze_wsf) || 0) +
+            (parseFloat(record.u_gzze_zzjt) || 0) +
+            (parseFloat(record.u_gzze_jxgz) || 0)
+        );
+        //保险
+        //if (record.u_gzze_sqxj) {
+        //    record.u_gzze_bx = (
+        //        parseFloat(record.u_gzze_sqxj) * (0.47 + 0.11)
+        //    ).toFixed(2);
+        //}
+        //月度工资总额合计
+        record.u_gzze_gdgzzehj = (
+            (parseFloat(record.u_gzze_sqxj) || 0) +
+            (parseFloat(record.u_gzze_bx) || 0)
+        );
+        //取暖防暑逻辑
+
+        const qnAll = (parseFloat(record.u_qtjt_qnf) || 0) * (parseFloat(record.u_qnq) || 0) + (parseFloat(record.u_qtjt) || 0) * (parseFloat(record.u_fsq) || 0);
+        //工资及补助总额
+        // record.u_gz_bz = parseFloat(qnAll) + (
+        //     (parseFloat(record.u_gzze_gdgzzehj) || 0) +
+        //     (parseFloat(record.u_ydjt_all) || 0)
+        // ) * (parseFloat(record.u_gzsj) || 0);
+        record.u_gz_bz = (parseFloat(qnAll) +
+            (parseFloat(record.u_gzze_gdgzzehj) || 0) +
+            (parseFloat(record.u_ydjt_all) || 0)
+        ) * (parseFloat(record.u_gzsj) || 0);
+        table.updateRow(record);
+        updateTotalCost(); // 新增：每次编辑后都触发合计
+    })
+
+    //暗提示
+    //表体不同行设置不同的提示文字
+    useAction("clickHighlight")(function (e) {	//点击时
+
+        if (d1grid.getSelectedData()[0].s_tree_name == "印花税") {	//当树名等于印花税时
+            $NG.updateUI((updater, state) => {
+                const gridStore = updater.grid.p_form_0000000080_d3.getApi();
+                updater.grid.p_form_0000000080_d3.u_cssm.setProps({
+                    placeholder: "按税前合同总额0.06%（收支类合同各按照0.03%计算）"
+                });
+                const targetField = state[2].children[2].children[3];
+                if (targetField.editor) {
+                    targetField.editor.placeholder = '按税前合同总额0.06%（收支类合同各按照0.03%计算）';
+                }
+            });
+        }
+        if (d1grid.getSelectedData()[0].s_tree_name == "低值易耗品及煤气其他物料消耗") {	//当树名等于印花税时
+            $NG.updateUI((updater, state) => {
+                const gridStore = updater.grid.p_form_0000000080_d3.getApi();
+                updater.grid.p_form_0000000080_d3.u_cssm.setProps({
+                    placeholder: "按合同额手输%"
+                });
+                const targetField = state[2].children[2].children[3];
+                if (targetField.editor) {
+                    targetField.editor.placeholder = '按合同额手输%';
+                }
+            });
+        }
+        if (d1grid.getSelectedData()[0].s_tree_name == "仪器检测费") {	//当树名等于印花税时
+            $NG.updateUI((updater, state) => {
+                const gridStore = updater.grid.p_form_0000000080_d3.getApi();
+                updater.grid.p_form_0000000080_d3.u_cssm.setProps({
+                    placeholder: "按合同额 手输 %"
+                });
+                const targetField = state[2].children[2].children[3];
+                if (targetField.editor) {
+                    targetField.editor.placeholder = '按合同额 手输 %';
+                }
+            });
+        }
+        if (d1grid.getSelectedData()[0].s_tree_name == "外租房屋费") {	//当树名等于印花税时
+            $NG.updateUI((updater, state) => {
+                const gridStore = updater.grid.p_form_0000000080_d3.getApi();
+                updater.grid.p_form_0000000080_d3.u_cssm.setProps({
+                    placeholder: "请输入"
+                });
+                const targetField = state[2].children[2].children[3];
+                if (targetField.editor) {
+                    targetField.editor.placeholder = '请输入';
+                }
+            });
+        }
+        if (d1grid.getSelectedData()[0].s_tree_name == "生活区、办公区水电费") {	//当树名等于印花税时
+            $NG.updateUI((updater, state) => {
+                const gridStore = updater.grid.p_form_0000000080_d3.getApi();
+                updater.grid.p_form_0000000080_d3.u_cssm.setProps({
+                    placeholder: "全部施工现场住宿的按合同额的手输%"
+                });
+                const targetField = state[2].children[2].children[3];
+                if (targetField.editor) {
+                    targetField.editor.placeholder = '全部施工现场住宿的按合同额的手输%';
+                }
+            });
+        }
+        if (d1grid.getSelectedData()[0].s_tree_name == "建设工程交易服务费") {	//当树名等于印花税时
+            $NG.updateUI((updater, state) => {
+                const gridStore = updater.grid.p_form_0000000080_d3.getApi();
+                updater.grid.p_form_0000000080_d3.u_cssm.setProps({
+                    placeholder: "EPC总承包合同招标咨询费等"
+                });
+                const targetField = state[2].children[2].children[3];
+                if (targetField.editor) {
+                    targetField.editor.placeholder = 'EPC总承包合同招标咨询费等';
+                }
+            });
+        }
+        if (d1grid.getSelectedData()[0].s_tree_name == "招标代理费") {	//当树名等于印花税时
+            $NG.updateUI((updater, state) => {
+                const gridStore = updater.grid.p_form_0000000080_d3.getApi();
+                updater.grid.p_form_0000000080_d3.u_cssm.setProps({
+                    placeholder: "设备招标代理费按《招标代理业务收费管理暂行办法》国家计委1980号文件0.5%执行"
+                });
+                const targetField = state[2].children[2].children[3];
+                if (targetField.editor) {
+                    targetField.editor.placeholder = '设备招标代理费按《招标代理业务收费管理暂行办法》国家计委1980号文件0.5%执行';
+                }
+            });
+        }
+        if (d1grid.getSelectedData()[0].s_tree_name == "专家评审费、论证费") {	//当树名等于印花税时
+            $NG.updateUI((updater, state) => {
+                const gridStore = updater.grid.p_form_0000000080_d3.getApi();
+                updater.grid.p_form_0000000080_d3.u_cssm.setProps({
+                    placeholder: "深基坑、超高支撑专家论证费等"
+                });
+                const targetField = state[2].children[2].children[3];
+                if (targetField.editor) {
+                    targetField.editor.placeholder = '深基坑、超高支撑专家论证费等';
+                }
+            });
+        }
+        if (d1grid.getSelectedData()[0].s_tree_name == "项目用车消耗") {	//当树名等于印花税时
+            $NG.updateUI((updater, state) => {
+                const gridStore = updater.grid.p_form_0000000080_d3.getApi();
+                updater.grid.p_form_0000000080_d3.u_cssm.setProps({
+                    placeholder: "一类项目：手输元/月；交工结算期按50%考虑(上述金额含项目经理用车手输元/月)；"
+                });
+                const targetField = state[2].children[2].children[3];
+                if (targetField.editor) {
+                    targetField.editor.placeholder = '一类项目：手输元/月；交工结算期按50%考虑(上述金额含项目经理用车手输元/月)；';
+                }
+            });
+        }
+        if (d1grid.getSelectedData()[0].s_tree_name == "业务招待费") {	//当树名等于印花税时
+            $NG.updateUI((updater, state) => {
+                const gridStore = updater.grid.p_form_0000000080_d3.getApi();
+                updater.grid.p_form_0000000080_d3.u_cssm.setProps({
+                    placeholder: "按合同额手输 %"
+                });
+                const targetField = state[2].children[2].children[3];
+                if (targetField.editor) {
+                    targetField.editor.placeholder = '按合同额手输 %';
+                }
+            });
+        }
+
+    }, "p_form_0000000080_d3");
+
+}, function () {
+    console.log('list Ready');
+});
+
+

@@ -1,0 +1,424 @@
+package com.example.secdev.service.WK;
+
+import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.example.secdev.domain.wk.Pcm3CntM;
+import com.example.secdev.helper.DBLog;
+import com.example.secdev.mapper.i8.Fg3EnterpriseMapper;
+import com.example.secdev.model.i8.Fg3Enterprise;
+import com.example.secdev.model.i8.I8ReturnModel;
+import com.example.secdev.model.wk.WKResultModel;
+import com.example.secdev.model.wk.WKResultUtils;
+import com.example.secdev.utils.*;
+import net.sourceforge.pinyin4j.PinyinHelper;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+@Service
+public class SupplyServiceImpl extends LCUtils implements SupplyService {
+
+    @Autowired
+    private DBLog dbLog;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private GetDataUtils getDataUtils;
+    @Autowired
+    private I8Utils i8Utils;
+    @Autowired
+    private Fg3EnterpriseMapper fg3EnterpriseMapper;
+    @Autowired
+    private EntityConverter entityConverter;
+
+    private final static String entpriseformData = "{\"form\":{\"key\":\"PhId\",\"newRow\":{\"CompNo\":\"\",\"CompName\":\"\",\"PersonFlg\":0,\"SimpName\":\"\",\"SimpName2\":\"\",\"HelpCode\":\"\",\"UnisocialCredit\":\"\",\"TaxNo\":\"\",\"CardType\":\"\",\"CardNo\":\"\",\"NationId\":1,\"ProvinceId\":\"\",\"CityId\":\"\",\"RegionId\":\"0\",\"TradeTypeId\":\"\",\"ParentCompId\":\"\",\"NgShareSign\":\"1\",\"IcChangeDt\":\"\",\"Remarks\":\"\",\"IsTemp_EXName\":\"\",\"IsInner_EXName\":\"\",\"IsBlackList_EXName\":\"\",\"OldName\":\"\",\"PhId\":\"\",\"AppStatus\":\"1\",\"AppDt\":\"\",\"PhIdApp\":\"\",\"EstablishDate\":\"\",\"TaxPayerType\":\"\",\"TaxPayerName\":\"\",\"TaxBankId\":\"\",\"TaxBankName\":\"\",\"TaxAccountNo\":\"\",\"TaxAddress\":\"\",\"TaxTelePhone\":\"\",\"RegMoney\":\"\",\"PhIdRegFcur\":\"\",\"RegDt\":\"\",\"RegScope\":\"\",\"Person\":\"\",\"TradeGradeId\":\"\",\"EnterNatureId\":\"\",\"ScaleId\":\"\",\"Url\":\"\",\"Email\":\"\",\"IsTemp\":\"0\",\"IsInner\":\"0\",\"IsBlackList_tmp\":\"0\",\"CreateCustom_tmp\":\"0\",\"key\":\"\"}}}";
+    private final static String supplyfileformData = "{\"form\":{\"key\":\"PhId\",\"newRow\":{\"FsaleFlg\":1,\"SupplyRankId\":\"0\",\"PhIdDept\":\"\",\"PhIdEmp\":\"\",\"PhIdOrg\":\"324191126000002\",\"Creator\":\"324191126000003\",\"NgInsertDt\":\"\",\"AppStatus\":\"\",\"Accstop\":\"\",\"AccstopBDt\":\"\",\"AccstopEndDt\":\"\",\"SuppClassId\":\"1000\",\"GfiCboo\":\"\",\"BpIds\":\"\",\"BidFlag\":0,\"ServiceArea\":\"\",\"ValidityDt\":\"\",\"PhIdEnt\":\"\",\"Editor\":\"\",\"NgUpdateDt\":\"\",\"PhIdApp\":\"\",\"AppDt\":\"\",\"PhIdSchemeId\":\"\",\"ImpInfo\":\"\",\"ResourceTable\":\"\",\"PhIdResource\":\"\",\"PhId\":\"\",\"NgRecordVer\":\"\",\"NgShareSign\":\"\",\"IsBlackList\":\"0\",\"CreateCustom\":\"0\",\"ListFilterVal\":\"\",\"QueryField1Val\":\"\",\"QueryField2Val\":\"\",\"UIMultiConfigID\":\"\",\"WfFlag\":\"\",\"VaryStatus\":\"\",\"key\":\"\"}}}";
+    private final static String addressgridData = "{\"table\":{\"key\":\"PhId\"}}";
+    private final static String linkmangridData = "{\"table\":{\"key\":\"PhId\"}}";
+    private final static String suppCategoryGridData = "{\"table\":{\"key\":\"PhId\",\"newRow\":[{\"row\":{\"id\":\"1\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"1\",\"CategoryNo\":\"010001\",\"CategoryName\":\"分包商\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"root\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"3\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"3\",\"CategoryNo\":\"010003\",\"CategoryName\":\"设计院\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"root\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"4\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"4\",\"CategoryNo\":\"010004\",\"CategoryName\":\"监理单位\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"root\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"5\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"5\",\"CategoryNo\":\"010005\",\"CategoryName\":\"材料供应商\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"root\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"7\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"7\",\"CategoryNo\":\"010007\",\"CategoryName\":\"设备供应商\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"root\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"9\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"9\",\"CategoryNo\":\"010008\",\"CategoryName\":\"服务供应商\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"root\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"10\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"10\",\"CategoryNo\":\"010009\",\"CategoryName\":\"劳务负责人\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"root\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"11\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"11\",\"CategoryNo\":\"01000101\",\"CategoryName\":\"专业分包商\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"1\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"12\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"12\",\"CategoryNo\":\"01000102\",\"CategoryName\":\"劳务分包商\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"1\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"1000\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"1000\",\"CategoryNo\":\"1\",\"CategoryName\":\"无类型\",\"SelectedMain\":true,\"Selected\":true,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"root\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"224200401000001\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"224200401000001\",\"CategoryNo\":\"010009\",\"CategoryName\":\"勘察单位\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"root\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"224200410000001\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"224200410000001\",\"CategoryNo\":\"01000102\",\"CategoryName\":\"工程分包商\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"1\",\"checked\":null,\"loading\":false,\"key\":null}},{\"row\":{\"id\":\"224200321000001\",\"PhId\":\"0\",\"PhIdEnt\":\"0\",\"PhIdOrg\":\"\",\"CategoryId\":\"224200321000001\",\"CategoryNo\":\"01000101\",\"CategoryName\":\"劳务分包\",\"SelectedMain\":false,\"Selected\":false,\"Creator\":\"\",\"Editor\":\"\",\"NgInsertDt\":null,\"NgUpdateDt\":null,\"NgRecordVer\":0,\"GroupShareFlg\":0,\"PhIdSupplyRank\":\"0\",\"PhIdSupplyRank_EXName\":\"\",\"parentId\":\"1\",\"checked\":null,\"loading\":false,\"key\":null}}]},\"isChanged\":true}";
+    private final static String suppItemGridData = "{\"table\":{\"key\":\"PhId\"}}";
+    private final static String cardInfoGridData = "{\"table\":{\"key\":\"PhId\"}}";
+    private final static String qualificationGridData = "{\"table\":{\"key\":\"PhId\"}}";
+    private final static String supplysettleinfoData = "{\"form\":{\"key\":\"PhId\",\"newRow\":{\"BillToId\":\"\",\"PhIdPayWay\":\"\",\"PhIdFcur\":\"1\",\"PhIdBank\":\"\",\"AccountNo\":\"\",\"DiscType\":\"\",\"DiscRate\":\"\",\"AccountName\":\"\",\"ProvinceId\":\"\",\"CityId\":\"\",\"RegionId\":\"\",\"CreditRankId\":\"\",\"CreditDays\":\"\",\"CreditNum\":\"\",\"PayDay\":\"\",\"PayAcctId\":\"\",\"PrepayAcctId\":\"\",\"PurAcctId\":\"\",\"InAcctId\":\"\",\"PhId\":\"\",\"key\":\"\"}}}";
+    private final static String supplybusiinfoData = "{\"form\":{\"key\":\"PhId\",\"newRow\":{\"OrderCyc\":\"\",\"DelDay\":\"\",\"BackPeriod\":\"\",\"BackRate\":\"\",\"PhId\":\"\",\"GoodsToId\":\"\",\"ShipTypeId\":\"\",\"SupitemBarCodeStart\":\"\",\"SupitemBarCodeLength\":\"\",\"key\":\"\"}}}";
+    private final static String unitaccountData = "{\"table\":{\"key\":\"PhId\"}}";
+    private final static String parentcompData = "{\"table\":{\"key\":\"PhId\"}}";
+    private final static String suppEvaluateGridData = "{\"table\":{\"key\":\"PhId\"}}";
+    private final static String laborSubContractorGridData = "{\"table\":{\"key\":\"PhId\"}}";
+    private final static String empGridData = "{\"table\":{\"key\":\"PhId\"}}";
+    private final static String busguid = "f61cd64e-e8ba-4a0f-94ff-9297b0272eed";
+
+    public WKResultModel insert(String json) {
+        dbLog.info("接收五矿供应商信息", "接收信息:" + json);
+        try {
+            String quereyCodeRulesSql = "select distinct codemode from C_PFC_BILLNORULE_M where c_btype='SUPPLY' and codemode='1'";
+            List<String> codemode = jdbcTemplate.queryForList(quereyCodeRulesSql, String.class);
+
+            if (!codemode.isEmpty()) {
+                throw new Exception("供应商设置了编码规则,接口不进行同步数据");
+            }
+
+            JSONArray jsonArray = JSONArray.parseArray(json);
+
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject item = (JSONObject) jsonArray.get(i);
+                String entsql = "";
+                String entphid = null;
+                String unisocialcredit = item.getString("YYZZ");
+                String DWBM = item.getString("DWBM");//编码
+                String DWMC = item.getString("DWMC");//名称
+                String MCLX = item.getString("MCLX");//名称类型 0 是单位 1 是个人
+                String YYZZ = item.getString("YYZZ");//营业执照号
+                String ZCZJ = item.getString("ZCZJ");//注册资金
+                String FR = item.getString("FR");//法人
+                String NSRBS = item.getString("NSRBS");//纳税身份类型
+                String BUSINESSCLASSIFICATION = item.getString("BUSINESSCLASSIFICATION");//业务分类
+                String FWTYPE = item.getString("FWTYPE");///冻结标志，根据停用标志更新0未冻结1已冻结
+                String SHEF = item.getString("SHEF");//国外
+                String DWDZ = item.getString("DWDZ");//单位地址
+                String tele = item.getString("FRTEL");//联系电话
+                String SPSJ = item.getString("SPSJ");//审批日期/供应商准入日期
+                String MODIFIEDTIME = item.getString("MODIFIEDTIME");//修改时间
+                String HMD = item.getString("HMD");// 是否 黑名单
+                String FWGX = item.getString("FWGX");// 服务关系
+                //企业性质
+                String EnterNatureId = item.getString("QYXZ");
+                String qyxzSql = "SELECT phid FROM fg_simple_data WHERE c_name = ?";
+                List<Map<String, Object>> qyxzList = jdbcTemplate.queryForList(qyxzSql, EnterNatureId);
+                if (!qyxzList.isEmpty()) {
+                    EnterNatureId = qyxzList.get(0).get("phid").toString();
+                } else {
+                    EnterNatureId = "0";
+                }
+                String accstop = "0";//冻结
+                String isblacklist = "0";//黑名单
+                String fsaleflg = "1";
+                if(!"CN".equals(item.getString("SHEF"))) {//国外供应商
+                    if (ObjectUtil.isEmpty(DWBM)) {
+                        throw new Exception("接收五矿国外供应商单位编码(DWBM)为空");
+                    }
+                    entsql = "select phid from fg3_enterprise where user_dsbm = ?";
+                    List<String> entphids = jdbcTemplate.queryForList(entsql, String.class, DWBM);
+                    if (!entphids.isEmpty()) {
+                        entphid = entphids.get(0);
+                    }
+                }
+                if ("CN".equals(item.getString("SHEF")) && "1".equals(MCLX)) { //个人供应商
+                    if (ObjectUtil.isEmpty(YYZZ)) {
+                        throw new Exception("接收五矿国内个人供应商身份证号(YYZZ)为空");
+                    }
+                    entsql = "select phid from fg3_enterprise where cardno = ?";
+                    List<String> entphids = jdbcTemplate.queryForList(entsql, String.class, unisocialcredit);
+                    if (!entphids.isEmpty()) {
+                        entphid = entphids.get(0);
+                    }
+                }
+                if ("CN".equals(item.getString("SHEF")) && "0".equals(MCLX)) { //企业供应商
+                    if (ObjectUtil.isEmpty(YYZZ)) {
+                        throw new Exception("接收五矿国内企业供应商社会统一信用代码(YYZZ)为空");
+                    }
+                    entsql = "select phid from fg3_enterprise where unisocialcredit = ?";
+                    List<String> entphids = jdbcTemplate.queryForList(entsql, String.class, unisocialcredit);
+                    if (!entphids.isEmpty()) {
+                        entphid = entphids.get(0);
+                    }
+                }
+                if ("是".equals(HMD)) {
+                    accstop = "1";
+                    isblacklist = "1";
+                    fsaleflg = "0";
+                }
+
+                String province = StringUtils.isNotEmpty(item.getString("FOREBSSZSF")) ? item.getString("FOREBSSZSF").trim() : "";
+                String city = StringUtils.isNotEmpty(item.getString("FOREBSSZCS")) ? item.getString("FOREBSSZCS").trim() : "";
+                String region = StringUtils.isNotEmpty(item.getString("FOREBSSZX")) ? item.getString("FOREBSSZX").trim() : "";
+                String ProvinceId = getRegionPhid(province, 1, "provincename");
+                String CityId = getRegionPhid(city, 2, "cityname");
+                String RegionId = getRegionPhid(region, 3, "regionname");
+
+
+                if (entphid == null) {
+                    //执行新增
+                    HashMap<String, Object> entMap = new HashMap<>();
+                    List<NameValuePair> urlParameters = new ArrayList<>();
+                    entMap.put("CompNo", DWBM);//编码
+                    entMap.put("CompName", DWMC);//名称
+                    entMap.put("SimpName", "");//简称
+                    entMap.put("HelpCode", getPinyinFirstLetter(DWMC));//助记码
+                    entMap.put("RegMoney", ZCZJ);//注册资金
+                    entMap.put("Person", FR);//法人
+                    entMap.put("user_dsbm", DWBM);//编码
+                    if (!"CN".equals(item.getString("SHEF"))) {
+                        entMap.put("PersonFlg", "4");
+                    }
+                    if ("CN".equals(item.getString("SHEF")) && "1".equals(MCLX)) {
+                        entMap.put("PersonFlg", "1");
+                        entMap.put("CardType", "1");
+                        entMap.put("CardNo", YYZZ);
+                    }
+                    if ("CN".equals(item.getString("SHEF")) && "0".equals(MCLX)) {
+                        entMap.put("UnisocialCredit", YYZZ);
+                    }
+                    entMap.put("EnterNatureId", EnterNatureId); //企业性质
+                    entMap.put("TaxAccountNo", YYZZ); //税务登记号
+                    entMap.put("TaxPayerName", DWMC); //纳税人名称
+                    entMap.put("TaxPayerType", NSRBS); //纳税人名称
+                    entMap.put("user_ywfl", BUSINESSCLASSIFICATION); //业务分类
+                    entMap.put("ProvinceId", ProvinceId);
+                    entMap.put("CityId", CityId);
+                    entMap.put("RegionId", RegionId);
+                    entMap.put("user_dscode", DWBM);
+                    entMap.put("SuppClassId", "1000");
+                    entMap.put("Accstop", FWTYPE);
+                    entMap.put("FsaleFlg", fsaleflg);
+                    entMap.put("user_tbinspurtime", SPSJ);
+                    urlParameters.add(new BasicNameValuePair("entpriseformData", NGEncodeUtil.desEncryptToHexString(EntityConverter.SetField(entpriseformData, entMap))));
+                    HashMap<String, Object> supMap = new HashMap<>();
+                    supMap.put("SuppClassId", "1000");
+                    urlParameters.add(new BasicNameValuePair("supplyfileformData", EntityConverter.SetField(supplyfileformData, supMap)));
+                    urlParameters.add(new BasicNameValuePair("addressgridData", NGEncodeUtil.desEncryptToHexString(addressgridData)));
+                    urlParameters.add(new BasicNameValuePair("linkmangridData", NGEncodeUtil.desEncryptToHexString(linkmangridData)));
+                    urlParameters.add(new BasicNameValuePair("suppCategoryGridData", suppCategoryGridData));
+                    urlParameters.add(new BasicNameValuePair("suppItemGridData", suppItemGridData));
+                    urlParameters.add(new BasicNameValuePair("cardInfoGridData", NGEncodeUtil.desEncryptToHexString(cardInfoGridData)));
+                    urlParameters.add(new BasicNameValuePair("qualificationGridData", qualificationGridData));
+                    //结算信息
+                    HashMap<String, Object> map1 = new HashMap<>();
+                    String bankno = item.getString("LHH");
+                    String bankPhid = "0";
+                    if ("CN".equals(SHEF)) {
+                        String bankSql = "select phid from fg_bank where  bankno = ?";
+                        List<Map<String, Object>> bankList = jdbcTemplate.queryForList(bankSql, bankno);
+                        if (bankList.isEmpty()) {
+                            throw new Exception("银行信息不存在");
+                        }
+                        bankPhid = bankList.get(0).get("phid").toString();
+                    }
+                    map1.put("BankId", bankPhid);
+                    String bz = item.getString("BIZHONG");
+                    String bzSql = "select phid from fg_fcur where  fc_name = ?";
+                    String bzPhid = null;
+                    List<Map<String, Object>> bzList = jdbcTemplate.queryForList(bzSql, bz);
+                    if (bzList.isEmpty()) {
+                        throw new Exception("没匹配币种");
+                    }
+                    bzPhid = bzList.get(0).get("phid").toString();
+                    map1.put("FcId", bzPhid);
+                    map1.put("AccountNo", item.getString("ZH"));
+                    urlParameters.add(new BasicNameValuePair("supplysettleinfoData", NGEncodeUtil.desEncryptToHexString(EntityConverter.SetField(supplysettleinfoData, map1))));
+                    urlParameters.add(new BasicNameValuePair("supplybusiinfoData", supplybusiinfoData));
+                    urlParameters.add(new BasicNameValuePair("unitaccountData", NGEncodeUtil.desEncryptToHexString(unitaccountData)));
+                    urlParameters.add(new BasicNameValuePair("parentcompData", parentcompData));
+                    urlParameters.add(new BasicNameValuePair("suppEvaluateGridData", suppEvaluateGridData));
+                    urlParameters.add(new BasicNameValuePair("laborSubContractorGridData", laborSubContractorGridData));
+                    urlParameters.add(new BasicNameValuePair("busguid", ""));
+                    urlParameters.add(new BasicNameValuePair("puic_changeid", ""));
+                    urlParameters.add(new BasicNameValuePair("puic_changeresult", ""));
+                    urlParameters.add(new BasicNameValuePair("puic_changesuggest", ""));
+                    urlParameters.add(new BasicNameValuePair("empGridData", empGridData));
+                    urlParameters.add(new BasicNameValuePair("refType", ""));
+                    urlParameters.add(new BasicNameValuePair("refId", "0"));
+                    urlParameters.add(new BasicNameValuePair("ocrguid", "0"));
+                    urlParameters.add(new BasicNameValuePair("operatetype", ""));
+                    urlParameters.add(new BasicNameValuePair("ng3_logid", "0"));
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Data-Encoded-Fields", "[\"entpriseformData\",\"addressgridData\",\"linkmangridData\",\"cardInfoGridData\",\"supplysettleinfoData\",\"unitaccountData\"]");
+                    headers.put("Data-Is-Encoded", "true");
+                    I8ReturnModel i8ReturnModel = i8Utils.PostFormSync("/xzd/DMC/Enterprise/SupplyFile/save", urlParameters, headers);
+                    if (i8ReturnModel.getIsOk()) {
+                        Fg3Enterprise ent = new Fg3Enterprise();
+                        if (!"CN".equals(item.getString("SHEF"))) {//国外供应商
+                            ent = fg3EnterpriseMapper.findByUserDsbm(DWBM);
+                        }
+                        if ("CN".equals(item.getString("SHEF")) && "1".equals(MCLX)) { //个人供应商
+                            ent = fg3EnterpriseMapper.findByCard(YYZZ);
+                        }
+                        if ("CN".equals(item.getString("SHEF")) && "0".equals(MCLX)) { //企业供应商
+                            ent = fg3EnterpriseMapper.findByUn(unisocialcredit);
+                        }
+                        fg3Unitaccount(item.getJSONArray("BANKLIST"), item, ent.getPhid());
+                        fg3Supplyitemfile(item.getString("FWGX"),ent.getPhid());
+                        fg3Address(item, ent.getPhid());
+                        jdbcTemplate.update("update fg3_enterprise set accstop=?,phid_app='224200105000002',app_dt=?,app_status='1',user_istbinspur='',user_tbinspurtime='',user_dsbm=?,user_dsrrq=?,user_gystssj=? where phid=? ", new Object[]{
+                                accstop, SPSJ, DWBM, SPSJ,TimeUtils.getDateStr().toString(), ent.getPhid()
+                        });
+                        jdbcTemplate.update("update fg3_supplyfile set accstop=?,isblacklist=?,phid_app='224200105000002',app_dt=?,app_status='1',ng_update_dt=?,fsaleflg=? where phid_ent=?", new Object[]{
+                                accstop, isblacklist,SPSJ,MODIFIEDTIME,fsaleflg,ent.getPhid()
+                        });
+                    } else {
+                        throw new Exception(i8ReturnModel.getMessage());
+                    }
+                } else {
+                    if (!"CN".equals(item.getString("SHEF"))) {  //国外供应商
+                        jdbcTemplate.update("update  fg3_enterprise set accstop=?,compname = ?,regmoney = ?,person = ?,taxaccountno = ?,province_id =coalesce(nullif(?,''), null),city_id = coalesce(nullif(?,''), null),user_istbinspur='',user_tbinspurtime='',user_dsrrq=?,user_gystssj=?\n" +
+                                "where phid=?", new Object[]{
+                                accstop, DWMC, ZCZJ, FR, YYZZ, ProvinceId,CityId,SPSJ,TimeUtils.getDateStr().toString(), entphid
+                        });
+                    }
+                    if ("CN".equals(item.getString("SHEF")) && "1".equals(MCLX)) { //国内个人供应商
+                        jdbcTemplate.update("update  fg3_enterprise set accstop=?,compname = ?,regmoney = ?,person = ?,taxaccountno = ?,province_id =coalesce(nullif(?,''), null),unisocialcredit='',city_id = coalesce(nullif(?,''), null),cardno = ?,user_istbinspur='',user_tbinspurtime='',user_dsrrq=?,user_gystssj=?\n" +
+                                "where phid=?", new Object[]{
+                                accstop, DWMC, ZCZJ, FR,YYZZ,ProvinceId,CityId, YYZZ,SPSJ,TimeUtils.getDateStr().toString(), entphid
+                        });
+                    }
+                    if ("CN".equals(item.getString("SHEF")) && "0".equals(MCLX)) {//国内企业供应商
+                        jdbcTemplate.update("update  fg3_enterprise set accstop=?,compname = ?,regmoney = ?,person = ?,taxaccountno = ?,province_id =coalesce(nullif(?,''), null),unisocialcredit=?,city_id = coalesce(nullif(?,''), null),cardno = '',user_istbinspur='',user_tbinspurtime='',user_dsrrq=?,user_gystssj=?\n" +
+                                "where phid=?", new Object[]{
+                                accstop, DWMC, ZCZJ, FR,YYZZ,ProvinceId,YYZZ,CityId, SPSJ,TimeUtils.getDateStr().toString(), entphid
+                        });
+                    }
+
+                    jdbcTemplate.update("update  fg3_supplyfile set accstop=?,isblacklist=?,fsaleflg=?,phid_app='224200105000002',app_dt=?,app_status='1',ng_update_dt=? where phid_ent=?", new Object[]{
+                            accstop, isblacklist, fsaleflg,SPSJ,MODIFIEDTIME,entphid
+                    });
+                    fg3Unitaccount(item.getJSONArray("BANKLIST"), item, entphid);
+                    fg3Supplyitemfile(item.getString("FWGX"),entphid);
+                    fg3Address(item, entphid);
+                }
+            }
+        } catch (Exception e) {
+            return WKResultUtils.error("同步供应商异常" + e.getMessage());
+        }
+        return WKResultUtils.success();
+    }
+
+    public static String getPinyinFirstLetter(String chinese) {
+        StringBuilder pinyin = new StringBuilder();
+        char[] charArray = chinese.toCharArray();
+        for (char c : charArray) {
+            String[] pinyinArray = PinyinHelper.toHanyuPinyinStringArray(c);
+            if (pinyinArray != null && pinyinArray.length > 0) {
+                pinyin.append(pinyinArray[0].charAt(0)); // 获取每个汉字的第一个拼音的首字母
+            } else {
+                pinyin.append(c); // 如果不是汉字，直接添加到结果中
+            }
+        }
+        return pinyin.toString().toUpperCase(); // 将所有字符转换为大写
+    }
+
+
+    private String getRegionPhid(String name, int level, String columnName) {
+        try {
+            String sql = "SELECT phid FROM fg3_region WHERE treelevel = ? AND " + columnName + " = ?";
+            return jdbcTemplate.queryForObject(sql, new Object[]{level, name}, String.class);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    //处理结算银行信息
+    private void fg3Unitaccount(JSONArray arr, JSONObject item, String entId) throws Exception {
+
+        if (!"CN".equals(item.getString("SHEF"))) {
+            JSONObject banObj = new JSONObject();
+            banObj.put("JSDWMC", item.getString("DWMC"));
+            banObj.put("KHYH", "境外不区分银行");
+            banObj.put("LHH", "999900000001");
+            banObj.put("ZH", item.getString("ZH"));
+            arr.add(banObj);
+        }
+        if (ObjectUtil.isNotNull(arr)) {
+            for (Iterator iterator = arr.iterator(); iterator.hasNext(); ) {
+                JSONObject obj = (JSONObject) iterator.next();
+                String bankno = obj.getString("LHH");
+                String saccount = obj.getString("ZH");
+                String accountname = obj.getString("JSDWMC");
+                String isdef = "1";
+                List<Map<String, Object>> bankList = jdbcTemplate.queryForList("select phid,bankname from fg_bank where bankno=?", bankno);
+                if (!bankList.isEmpty()) {
+                    String bankPhid = bankList.get(0).get("phid").toString();
+                    String bankname = bankList.get(0).get("bankname").toString();
+                    List<Map<String, Object>> unitaccountList = jdbcTemplate.queryForList("select phid from fg3_unitaccount where phid_ent=? and saccount=?", new Object[]{entId, saccount});
+                    if (!unitaccountList.isEmpty()) {
+                        String unitaccountPhid = unitaccountList.get(0).get("phid").toString();
+                        String updateSql = "update fg3_unitaccount set phid_bank=?,isdef=?,account_name=?,ng_update_dt=?,user_istbinspur='',user_tbinspurtime='' where phid=?";
+                        jdbcTemplate.update(updateSql, new Object[]{bankPhid, isdef, accountname, new Date(), unitaccountPhid});
+                    } else {
+                        String orgId = "324191209000001";
+                        String unitaccountPhid = GetNewPhidUtils.getPhid();
+                        String insertSql = "insert into fg3_unitaccount(phid,phid_ent,phid_ent_todrop,phid_org,phid_bank,saccount,isdef,acctype,creator,editor,ng_insert_dt,ng_update_dt,ng_record_ver,account_name)\n" +
+                                "values(?,?,?,?,?,?,?,'supply','0','0',?,?,'1',?)";
+                        jdbcTemplate.update(insertSql, new Object[]{unitaccountPhid, entId, entId, orgId, bankPhid, saccount, isdef, new Date(), new Date(), accountname});
+                    }
+                    if ("1".equals(isdef)) {
+                        List<Map<String, Object>> supplysettleInfoList = jdbcTemplate.queryForList("select phid, accountno from fg3_supplysettleinfo where phid_ent=? LIMIT 1", entId);
+                        if (!supplysettleInfoList.isEmpty()) {
+                            String accountPhid = supplysettleInfoList.get(0).get("phid").toString();
+                            Object accountno = supplysettleInfoList.get(0).get("accountno");
+                            if (ObjectUtil.isEmpty(accountno) || !accountno.equals(saccount)) {
+                                jdbcTemplate.update("update fg3_supplysettleinfo set phid_bank=?,accountno=?,account_name=? where phid=?", new Object[]{
+                                        bankPhid, saccount, accountname, accountPhid});
+                            }
+                        }
+                    }
+                } else {
+                    throw new Exception("没匹配到：" + bankno + "对应银行");
+                }
+            }
+        }
+    }
+
+    //处理服务关系信息
+    private void fg3Supplyitemfile(String json,String entId) {
+        JSONArray arr = JSON.parseArray(json);
+        for (Iterator iterator = arr.iterator(); iterator.hasNext(); ) {
+            JSONObject obj = (JSONObject) iterator.next();
+            List<Map<String, Object>> mapList = jdbcTemplate.queryForList("select phid_ent,phid_org from fg3_supplyfile where phid_ent =?", entId);
+            if (!mapList.isEmpty()) {
+                String fg3_supplyitemfileentphid = mapList.get(0).get("phid_ent").toString();
+                String fg3_supplyitemfileentfromorg_id = mapList.get(0).get("phid_org").toString();
+                String user_fwgxdw = obj.getString("ZZJG");
+                String user_fwgxdwmc = obj.getString("ZRDWMC");
+                String user_zdkpdj = obj.getString("KPDJ");
+                String user_wzkpdj = obj.getString("KPDJMAT");
+                String user_fwkpdj = obj.getString("KPDJSER");
+                String user_gckpdj = obj.getString("KPDJPRO");
+                String user_ywfl = obj.getString("BUSINESSCLASSIFICATION");
+                List<Map<String, Object>> fwgxdwList = jdbcTemplate.queryForList("select phid from fg3_supplyitemfile where user_fwgxdw =? and phid_ent =?", new Object[]{
+                        user_fwgxdw, fg3_supplyitemfileentphid});
+                if (!fwgxdwList.isEmpty()) {
+                    String fwgxdwPhid = fwgxdwList.get(0).get("phid").toString();
+                    jdbcTemplate.update("update fg3_supplyitemfile set user_fwgxdwmc=?,user_zdkpdj=?,user_wzkpdj=?,user_fwkpdj=?,user_gckpdj=?,user_ywfl=? where  phid = ?", new Object[]{
+                            user_fwgxdwmc, user_zdkpdj, user_wzkpdj, user_fwkpdj, user_gckpdj, user_ywfl, fwgxdwPhid
+                    });
+                } else {
+                    String fwgxdwPhid = GetNewPhidUtils.getPhid();
+                    jdbcTemplate.update("insert into fg3_supplyitemfile(phid,phid_ent,phid_ent_todrop,phid_org,sku_no,phid_unit,price,quota,exchangerate,exchangeperiod,deliverycyc,creator,editor,ng_insert_dt,ng_update_dt,ng_record_ver,phid_sku,phid_res,phid_prdclass,user_fwgxdw,user_fwgxdwmc,user_zdkpdj,user_wzkpdj,user_gckpdj,user_fwkpdj,user_ywfl) " +
+                            "values (?,?,?,?,'010101000010004005','0','0','0','0','0','0','324191126000003','324191126000003',?,?,'1','10101000010004005','313191217000004','0',?,?,?,?,?,?,?)", new Object[]{
+                            fwgxdwPhid, fg3_supplyitemfileentphid, fg3_supplyitemfileentphid, fg3_supplyitemfileentfromorg_id, new Date(), new Date(), user_fwgxdw, user_fwgxdwmc, user_zdkpdj, user_wzkpdj, user_gckpdj, user_fwkpdj, user_ywfl
+                    });
+                }
+            }
+        }
+    }
+
+    //处理地址信息
+    private void fg3Address(JSONObject item, String entId) {
+        String DWDZ = item.getString("DWDZ");
+        String tele = item.getString("FRTEL");
+        List<Map<String, Object>> addressList = jdbcTemplate.queryForList("select phid from fg3_address where phid_ent=?", entId);
+        if (addressList.isEmpty()) {
+            String addressphid = GetNewPhidUtils.getPhid();
+
+            jdbcTemplate.update("insert into fg3_address(phid,phid_ent,phid_ent_todrop,addrtype,linkman_id,nation_id,province_id,city_id,address,enableflg,creator,editor,ng_insert_dt,ng_update_dt,ng_record_ver,tele)\n" +
+                    "values(?,?,?,'9','0','1','0','0',?,'0','0','0',?,?,'1',?)", new Object[]{
+                    addressphid, entId, entId, DWDZ, new Date(), new Date(), tele
+            });
+        } else {
+            String addressPhid = addressList.get(0).get("phid").toString();
+            jdbcTemplate.update("update fg3_address set address=?,tele=? where phid=?", new Object[]{
+                    DWDZ, tele, addressPhid
+            });
+        }
+    }
+}
