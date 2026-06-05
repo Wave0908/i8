@@ -539,36 +539,20 @@ function allReadyEdit() {
             });
         });
         /*原值、净值、累计折旧、税金、不含税金额*汇率=记账本位币start*/ /*20260604添加*/
+        dgrid.addListener('edit', function (editor, e) {
 
-        var autoChange = function () {
-            Ext.Array.each(dstore.data.items, function (record) {
-                var hl = record.data.u_hl;
-                record.set('u_jzbwbyz', Ext.Number.from(record.data.yz, 0) * Ext.Number.from(hl, 0));
-                record.set('u_jzbwbljzj', Ext.Number.from(record.data.ljzj, 0) * Ext.Number.from(hl, 0));
-                record.set('u_jzbwbjz', Ext.Number.from(record.data.jz, 0) * Ext.Number.from(hl, 0));
-                record.set('u_jzbwbsj', Ext.Number.from(record.data.se, 0) * Ext.Number.from(hl, 0));
-                record.set('u_jzbwbhsje', Ext.Number.from(record.data.bhsje, 0) * Ext.Number.from(hl, 0));
-            });
-
-        };
-        // 监听 update: 任何字段被修改（无论是用户手动编辑，还是代码 record.set()）都会触发
-        dstore.on('update', autoChange);
-        // 监听 datachanged: 任何行的增加、删除、重新加载都会触发
-        dstore.on('datachanged', autoChange);
-        // dgrid.addListener('edit', function (editor, e) {
-
-        //     if ((e.field == 'yz') || (e.field == 'u_hl')
-        //         || (e.field == 'ljzj') || (e.field == 'jz')
-        //         || (e.field == 'se') || (e.field == 'bhsje')) {
-        //         var record = e.record;
-        //         var hl = record.get('u_hl');
-        //         record.set('u_jzbwbyz', Ext.Number.from(record.get('yz'), 0) * Ext.Number.from(hl, 0));
-        //         record.set('u_jzbwbljzj', Ext.Number.from(record.get('ljzj'), 0) * Ext.Number.from(hl, 0));
-        //         record.set('u_jzbwbjz', Ext.Number.from(record.get('jz'), 0) * Ext.Number.from(hl, 0));
-        //         record.set('u_jzbwbsj', Ext.Number.from(record.get('se'), 0) * Ext.Number.from(hl, 0));
-        //         record.set('u_jzbwbhsje', Ext.Number.from(record.get('bhsje'), 0) * Ext.Number.from(hl, 0));
-        //     };
-        // });
+            if ((e.field == 'yz') || (e.field == 'u_hl')
+                || (e.field == 'ljzj') || (e.field == 'jz')
+                || (e.field == 'se') || (e.field == 'bhsje')) {
+                var record = e.record;
+                var hl = record.get('u_hl');
+                record.set('u_jzbwbyz', Ext.Number.from(record.get('yz'), 0) * Ext.Number.from(hl, 0));
+                record.set('u_jzbwbljzj', Ext.Number.from(record.get('ljzj'), 0) * Ext.Number.from(hl, 0));
+                record.set('u_jzbwbjz', Ext.Number.from(record.get('jz'), 0) * Ext.Number.from(hl, 0));
+                record.set('u_jzbwbsj', Ext.Number.from(record.get('se'), 0) * Ext.Number.from(hl, 0));
+                record.set('u_jzbwbhsje', Ext.Number.from(record.get('bhsje'), 0) * Ext.Number.from(hl, 0));
+            };
+        });
 
 
         /*原值、净值、累计折旧、税金、不含税金额*汇率=记账本位币end*/ /*20260604添加*/

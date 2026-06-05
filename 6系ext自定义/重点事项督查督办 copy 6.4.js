@@ -159,8 +159,6 @@ function allReadyEdit() {
         }, function (res) {
             if (res.count > 0) {
                 const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-                console.log("data[0].extendObjects.phid_org", data[0].extendObjects.phid_org)
-                console.log("data[0].extendObjects.phid", data[0].extendObjects.phid)
                 if (data[0].extendObjects.phid_org != '324191209000001') {
                     var myempid = data[0].extendObjects.phid_org
                     mstform.getItem('u_cbr').setClientSqlFilter(' cbr.zzbm = ' + myempid);
