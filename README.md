@@ -29,10 +29,5 @@
     *   JS 脚本：`/Users/w1ts/TangShan/js/脚本代码/`
     *   Python 脚本：`/Users/w1ts/TangShan/py脚本/` (若有生成)
 
-## 核心参考资料
-
-*   **React 开发参考**: [6.0脚本常见场景功能实现示例.js](file:///Users/w1ts/TangShan/js/6.0脚本常见场景功能实现示例.js)
-*   **Ext JS 字典**: [I8JS脚本编写字典V1.3(1).xlsx](file:///Users/w1ts/TangShan/js/I8JS脚本编写字典V1.3(1).xlsx)
-
 ---
 *注：本项目代码仅供内部开发参考，修改前请务必在测试环境验证。*
