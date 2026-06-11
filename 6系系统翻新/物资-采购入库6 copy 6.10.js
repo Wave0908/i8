@@ -33,9 +33,6 @@ function AllReady() {
                     var ChkFlg = mstform.queryById('ChkFlg').getValue();
                     var Tempflg = mstform.queryById('Tempflg').getValue();
                     var user_istbinspur = mstform.queryById('user_istbinspur').getValue();
-                    console.log("ChkFlg", ChkFlg);
-                    console.log("Tempflg", Tempflg);
-                    console.log("user_istbinspur", user_istbinspur);
                     if (Ext.isEmpty(ChkFlg) || ChkFlg == '0') {
                         Ext.Msg.alert('提示', '当前单据未审核，审核后重新推送');
                         return false;

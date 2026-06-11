@@ -22,6 +22,8 @@ function AllReady() {
 
     var mstform = Ext.getCmp('KC_INKCGRK_Head');
     var Toolbar = CommButtonView.toolbar;
+    var dgrid = Ext.getCmp('KC_INKZICRK_Body');
+    dgrid.setMustInputCol('Batchno', false);
     if (otype == $Otype.VIEW) {
         if (!Ext.isEmpty(Toolbar)) {
             Toolbar.insert(18, {
@@ -33,9 +35,6 @@ function AllReady() {
                     var ChkFlg = mstform.queryById('ChkFlg').getValue();
                     var Tempflg = mstform.queryById('Tempflg').getValue();
                     var user_istbinspur = mstform.queryById('user_istbinspur').getValue();
-                    console.log("ChkFlg", ChkFlg);
-                    console.log("Tempflg", Tempflg);
-                    console.log("user_istbinspur", user_istbinspur);
                     if (Ext.isEmpty(ChkFlg) || ChkFlg == '0') {
                         Ext.Msg.alert('提示', '当前单据未审核，审核后重新推送');
                         return false;
@@ -497,13 +496,13 @@ function AllReady() {
         grid.queryById('addrow').hide();
         grid.queryById('delrow').hide();
     }
-    grid.queryById('addrow').on('click', function () {
-        //store.insert(store.getCount(), [[, , , , 0, 0, 0,]]); //插入空直接写{}即可
-        store.add({
-            'phid': generateId(store.getCount() + 1).toString(),
-            'mstphid': busid
-        });
-    });
+    // grid.queryById('addrow').on('click', function () {
+    //     //store.insert(store.getCount(), [[, , , , 0, 0, 0,]]); //插入空直接写{}即可
+    //     store.add({
+    //         'phid': generateId(store.getCount() + 1).toString(),
+    //         'mstphid': busid
+    //     });
+    // });
 
     grid.queryById('delrow').on('click', function () {
         var data = grid.getSelectionModel().getSelection();

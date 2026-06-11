@@ -11,17 +11,15 @@ Ext.Ajax.on('requestcomplete', function (self, response, options) {
 
     console.log(ids);
 
-    //执行功能扩展
-    execServer('kcwritedown', {
-        'ids': ids.join(',')
-    }, function (res) {
-        console.log(res);
-    });
 });
 function AllReady() {
 
-    var mstform = Ext.getCmp('KC_INKCGRK_Head');
+    var mstform = Ext.getCmp('KC_INKZICRK_Head');
     var Toolbar = CommButtonView.toolbar;
+    var dgrid = Ext.getCmp('KC_INKZICRK_Body');
+    dgrid.setMustInputCol('Batchno', false);
+    Ext.getCmp('toolbar').get('addrow').setVisible(true);
+    console.log(dgrid);
     if (otype == $Otype.VIEW) {
         if (!Ext.isEmpty(Toolbar)) {
             Toolbar.insert(18, {
@@ -84,66 +82,6 @@ function AllReady() {
             });
         }
 
-        if (!Ext.isEmpty(Toolbar)) {
-            Toolbar.insert(19, {
-                itemId: "WK",
-                text: "推送五矿",
-                width: this.itemWidth,
-                iconCls: "iconfont iconcreate",
-                handler: function () {
-                    var ChkFlg = mstform.queryById('ChkFlg').getValue();
-                    var Wrioffflg = mstform.queryById('Wrioffflg').getValue();
-                    if (Ext.isEmpty(ChkFlg) || ChkFlg == '0') {
-                        Ext.Msg.alert('提示', '当前单据未审核，审核后重新推送');
-                        return false;
-                    }
-                    if (Wrioffflg == '3') {
-                        var loadMarsk = new Ext.LoadMask(document.body, {
-                            msg: '正在调用接口...',
-                            removeMask: true
-                        });
-                        Ext.Ajax.request({
-                            url: "http://172.20.65.5:30599/new_esey/gyl/pushData/cg_thd/" + busid,
-                            method: 'GET',
-                            async: false, //同步请求
-                            disableCaching: false, // 添加这行来阻止_dc参数
-                            success: function (response) {
-                                var result = Ext.decode(response.responseText);
-                                var message = result["message"];
-                                if (message == "调用成功") {
-                                    Ext.MessageBox.alert(Lang.Notes || '提示', "推送成功.", function () { });
-                                } else {
-                                    Ext.MessageBox.alert(Lang.Notes || '提示', message, function () { });
-                                }
-                            },
-                            failure: function (response) {
-                                console.error("请求失败")
-                            }
-                        });
-                    } else {
-                        Ext.Ajax.request({
-                            url: "http://172.20.65.5:30599/new_esey/gyl/pushData/cg_rkd/" + busid,
-                            method: 'GET',
-                            async: false, //同步请求
-                            disableCaching: false, // 添加这行来阻止_dc参数
-                            success: function (response) {
-                                var result = Ext.decode(response.responseText);
-                                var message = result["message"];
-                                if (message == "调用成功") {
-                                    Ext.MessageBox.alert(Lang.Notes || '提示', "推送成功.", function () {
-                                    });
-                                } else {
-                                    Ext.MessageBox.alert(Lang.Notes || '提示', message, function () { });
-                                }
-                            },
-                            failure: function (response) {
-                                console.error("请求失败")
-                            }
-                        });
-                    }
-                }
-            });
-        }
     }
     if (otype == $Otype.VIEW) {
         Toolbar.items.get('TS').on('click', function () {
@@ -160,7 +98,7 @@ function AllReady() {
         });
     }
 
-    var dgrid = Ext.getCmp('KC_INKCGRK_Body');
+
     if (Ext.isEmpty(dgrid)) {
         return false;
     }
@@ -177,44 +115,16 @@ function AllReady() {
         if (Ext.getCmp('toolbar')) Ext.getCmp('toolbar').get('addrow').setVisible(false);
     })
 
-    if (otype == $Otype.ADD || otype == $Otype.EDIT) {  //2026-01-09 增加edit
-        dstore.on('datachanged', function (dstore) {
-            //单据体增行更新事件
-            for (i = 0; i < dstore.getCount(); i++) {
-                var record = dstore.getAt(i);
-                record.set('user_sytxbl', 1);
-            }
-        })
-    }
+    // if (otype == $Otype.ADD || otype == $Otype.EDIT) {  //2026-01-09 增加edit
+    //     dstore.on('datachanged', function (dstore) {
+    //         //单据体增行更新事件
+    //         for (i = 0; i < dstore.getCount(); i++) {
+    //             var record = dstore.getAt(i);
+    //             record.set('user_sytxbl', 1);
+    //         }
+    //     })
+    // }
 
-    mstform.getItem('PhidContractno').addListener('helpselected', function () {
-        var PhidContractno = mstform.getItem('PhidContractno').getValue();
-        execServer('jtyght', {
-            'id': PhidContractno
-        }, function (res) {
-            //const data = JSON.parse(res.data);
-            const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-            if (data.length != 0) {
-                console.log("data[0].extendObjects.user_cghtzjxz:", data[0].extendObjects.user_cghtzjxz);
-                if (data[0].extendObjects.user_cghtzjxz == '3') {
-                    Ext.getCmp('toolbar').get('addrow').setVisible(true);
-                } else {
-                    Ext.getCmp('toolbar').get('addrow').setVisible(false);
-                }
-            } else {
-                Ext.getCmp('toolbar').get('addrow').setVisible(false);
-            }
-
-        });
-
-    })
-    // Ext.getCmp('toolbar').get('imp').on('click', function () {
-    // 	var user_wllb = mstform.getItem('user_wllb').getValue();
-    // 	if (!user_wllb) {
-    // 		Ext.Msg.alert('提示', '请选择物料类别！');
-    // 		return false;
-    // 	}
-    // });
     const impbtn = Ext.getCmp('toolbar')?.get('imp');
     if (impbtn) {
         impbtn.on('beforeclick', function () {                          //点击按钮检测事件
@@ -234,48 +144,6 @@ function AllReady() {
         // 	}
         // });
 
-        mstform.getItem('user_fjzs').setValue(1);
-        if (schemeid == '221019015002') {
-            mstform.getItem('user_sfjchtrk').setValue('1');
-        } else {
-            mstform.getItem('user_sfjchtrk').setValue('2');
-        }
-        dstore.on('datachanged', function (dstore, eOpts) {
-            setTimeout(function () {
-                var arr = dgrid.getStore().getRange(0, dstore.getCount() - 1);
-                var a = 0;
-                var b = 0;
-                for (i = 0; i < dstore.getCount(); i++) {
-                    var record = dstore.data.items[i];
-                    a += Ext.Number.from(record.get('Mony').toFixed(2), 0);
-                    b += Ext.Number.from(record.get('Tax').toFixed(2), 0);
-                }
-                mstform.getItem('user_bhsje_amt').setValue(a);
-                mstform.getItem('user_fpse_amt').setValue(b);
-            }, 1)
-        })
-
-        dgrid.addListener('edit', function (editor, e) { //监听单据体编辑状态，edit-编辑；add-增行；cellclick-点击
-            if (e.originalValue == e.value) {
-                return;
-            } //判断原值与新值是否相同
-            if (e.field == 'Mony' || e.field == 'Tax') { //监听qty、prc字段变化
-                var arr = dgrid.getStore().getRange(0, dstore.getCount() - 1);
-                var a = 0;
-                var b = 0;
-                for (i = 0; i < dstore.getCount(); i++) {
-                    var record = dstore.data.items[i];
-                    a += Ext.Number.from(record.get('Mony').toFixed(2), 0);
-                    b += Ext.Number.from(record.get('Tax').toFixed(2), 0);
-                }
-                mstform.getItem('user_bhsje_amt').setValue(a);
-                mstform.getItem('user_fpse_amt').setValue(b);
-            };
-        });
-    }
-    /*根据不含税金额明细汇总给主表 和发票税额总额end*/
-    if (mstform != '' || mstform != 'undefined') {
-        mstform.getItem('user_fjzs').setValue(1);
     }
     /*这一整段是调差，增加TAB，其他代码在此段之外去写start*/
     //定义model
@@ -513,12 +381,8 @@ function AllReady() {
     });
     /*插入往来明细表end*/
 
-    //单据编号设置为只读
-    mstform.getItem('user_djbh').userSetReadOnly(true);
-    //单据编号设置为必输
-    mstform.getItem('user_djbh').userSetMustInput(true);
     if (dgrid) { } else {
-        var dgrid = Ext.getCmp('KC_INKCGRK_Body');
+        var dgrid = Ext.getCmp('KC_INKZICRK_Body');
     }
     var dstore = dgrid.store;
 
@@ -549,48 +413,7 @@ function AllReady() {
         mstform.getItem('Invoiceno').userSetMustInput(true);
     }
 
-    /*采购入库 价格类型为实价 发票号必填 价格类型为暂估，发票类型非必填end*/
-    /* 	dgrid.addListener('edit', function(editor, e) { //监听单据体编辑状态，edit-编辑；add-增行；cellclick-点击
-            if (e.originalValue == e.value) {
-                return;
-            } //判断原值与新值是否相同
-            if (e.field == 'Qty') {
-                var ht = mstform.getItem('PhidContractno').getValue();
-                var record = e.record;
-                var a = 0;
-                var b = 0;
-                var c = 0;
-                Ext.Array.each(dstore.data.items, function(record) {
-                    a += Ext.Number.from(record.get('TaxMony'), 0)
-                });
-                execServer('Wz_cgrkkk', {
-                    'A': ht
-                }, function(res) {
-                    if (res.data[0]) {
-                        b = res.data[0].amt_count; //累计入库价
-                    } else {
-                        b = 0; //累计入库价
-                    }
-                });
-                execServer('Wz_cgrkk', {
-                    'A': ht
-                }, function(res) {
-                    c = res.data[0].cnt_sum_vat
-                });
-                var flag = c * 1.1 - b;
-                flag = Ext.Number.from(flag, 0);
-                var d = Ext.Number.from(b, 0) + Ext.Number.from(a, 0);
-                var abc = c * 1.1;
-                if (d > abc) {
-                    Ext.Msg.alert('超出警告！', '当前合同还可录入价税合计总计：' + flag + '元')
-                    record.set('Qty', 0); //计算amt值           
-                }
-            };
-        }); */
-
     //菜单栏增加复制功能
-    //var Toolbar = Ext.getCmp('toolbar');
-    //console.log("Toolbar:", Toolbar);
     if (!Ext.isEmpty(Toolbar)) {
         Toolbar.insert(1, {
             itemId: "copy",
@@ -639,12 +462,6 @@ function AllReady() {
     });
     /*存放地点根据是否低值易耗品为是的存放地点必输 不是 不必输end*/
 
-    /*采购入库单据编码根据项目名称自动生成start*/
-    mstform.getItem('Billno').addListener('change', function () {
-        var bill_no = mstform.getItem('Billno').getValue();
-        var newbill_no = bill_no.substr(-12);
-        mstform.getItem('user_djbh').setValue(newbill_no);
-    });
     /*采购入库单据编码根据项目名称自动生成end*/
 
     /*入库类型字段选择前触发隐藏甲供start*/
@@ -652,43 +469,6 @@ function AllReady() {
         mstform.getItem('user_rklb').setClientSqlFilter("fg_simple_data.phid <>  '224191231000034' ");
     });
     /*入库类型字段选择前触发隐藏甲供end*/
-
-    // mstform.getItem('PhidTrProj').addListener('helpselected', function(obj) {
-    // 	var pc = mstform.getItem('PhidTrProj').getValue()
-    // 	mstform.getItem('user_lcywdy').setValue(null);
-    // 	mstform.getItem('user_mnemcodeinaccdepart').setValue(null);
-    // 	execServer('gjxmxx_dcssxmb', {
-    // 		'phid': pc
-    // 	}, function(res) {
-    // 		if (!Ext.isEmpty(res.data[0].user_pc_dept)) {
-    // 			execServer('ssxmb_bmywdy', {
-    // 				'dept': res.data[0].user_pc_dept
-    // 			}, function(res) {
-    // 				if (!Ext.isEmpty(res.data[0].user_lcywdy)) {
-    // 					mstform.getItem('user_lcywdy').setValue(res.data[0].user_lcywdy);
-    // 				} else {
-    // 					Ext.Msg.alert('提示', '请先维护部门业务单元对照表');
-    // 					return false;
-    // 				}
-    // 			});
-
-    // 			execServer('ssxmb_zjm', {
-    // 				'dept': res.data[0].user_pc_dept
-    // 			}, function(res) {
-    // 				if (!Ext.isEmpty(res.data[0].user_mnemCodeInAccDepart)) {
-    // 					mstform.getItem('user_mnemcodeinaccdepart').setValue(res.data[0]
-    // 						.user_mnemCodeInAccDepart);
-    // 				} else {
-    // 					Ext.Msg.alert('提示', '浪潮核算部门的助记码没有和新中大部门编码保持一致');
-    // 					return false;
-    // 				}
-    // 			});
-    // 		} else {
-    // 			Ext.Msg.alert('提示', '项目信息所属项目部不存在');
-    // 			return false;
-    // 		}
-    // 	});
-    // });
 
     if (otype != $Otype.VIEW) {
         mstform.getItem('PhidTrProj').addListener('helpselected', function () {
